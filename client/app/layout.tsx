@@ -1,11 +1,10 @@
-import type { Metadata } from "next";
-import { Geist_Mono, Poppins } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Geist_Mono, Manrope } from "next/font/google";
 
 import "./globals.css";
 
-const body = Poppins({
+const body = Manrope({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
   variable: "--font-body",
   display: "swap",
 });
@@ -18,19 +17,24 @@ const mono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
-  title: "Graphia — document arcade",
+  title: "Graphia — document conversion, privately run",
   description:
-    "A poolside arcade for converting DOCX, PDF, Markdown, text, and images.",
+    "Turn DOCX, PDF, Markdown, text, and images into the file you need. Uploads go straight to private storage, and every run returns a ticket you can read.",
   robots: {
     index: false,
     follow: false,
   },
   openGraph: {
-    title: "Graphia — document arcade",
+    title: "Graphia — document conversion, privately run",
     description:
-      "Drop a document. Pick a mode. Take a different file.",
+      "A private press for everyday documents. Five modes, direct uploads, and a ticket you can read.",
     type: "website",
   },
+};
+
+export const viewport: Viewport = {
+  colorScheme: "light",
+  themeColor: "#F4ECDF",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -9,33 +9,49 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <main className="legal-page">
-      <Link className="back-link" href="/">
-        ← Back to the arcade
-      </Link>
-      <article className="legal-card">
-        <p className="panel-label">Graphia / privacy</p>
-        <h1>Privacy</h1>
-        <p>
-          Graphia stores the email and display name from your Zitadel account, a server
-          session, and a job record for each conversion.
+      <div className="legal-inner">
+        <Link className="back-link caption-1" href="/">
+          ← Back to Graphia
+        </Link>
+
+        <article className="legal-card">
+          <p className="eyebrow caption-3">Graphia / Privacy</p>
+          <h1 className="heading-2">Privacy</h1>
+          <p className="body-2">
+            Graphia stores the email and display name from your Zitadel account, a server
+            session, and a job record for each conversion.
+          </p>
+
+          <h2 className="heading-5">Files</h2>
+          <p className="body-3">
+            Uploaded files and converted results live in private object storage. They are
+            reachable only through signed links issued to the account that created the job,
+            and those links are short lived. Files expire after the locker period shown on
+            the run ticket.
+          </p>
+
+          <h2 className="heading-5">Authentication</h2>
+          <p className="body-3">
+            Sign in and account creation are handled by Elysiaa SSO through Zitadel. Graphia
+            does not receive or store your password.
+          </p>
+
+          <h2 className="heading-5">Deletion</h2>
+          <p className="body-3">
+            You can delete a run from its ticket to remove the stored input and output.
+            Account deletion is handled by the Graphia owner.
+          </p>
+        </article>
+
+        <p className="legal-foot caption-5">
+          <span>Graphia / Document atelier</span>
+          <span>
+            <Link href="/terms">Terms</Link>
+            <span aria-hidden="true"> / </span>
+            <Link href="/">Home</Link>
+          </span>
         </p>
-        <h2>Files</h2>
-        <p>
-          Uploaded files and converted results live in private object storage. They are
-          reachable only through short lived signed links issued to the account that created
-          the job. Files expire after the locker period shown on the job ticket.
-        </p>
-        <h2>Authentication</h2>
-        <p>
-          Sign in and account creation are handled by Elysiaa SSO through Zitadel. Graphia
-          does not receive or store your password.
-        </p>
-        <h2>Deletion</h2>
-        <p>
-          You can eject a job from its ticket to remove its stored input and output. Account
-          deletion is handled by the Graphia owner.
-        </p>
-      </article>
+      </div>
     </main>
   );
 }

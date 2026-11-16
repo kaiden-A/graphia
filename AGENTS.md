@@ -15,10 +15,11 @@ Environment scope reference: `docs/environment.md`. Local `server/.env` contains
 shared, API-only, and processor-only values for convenience; production must give
 each service only its own scope.
 
-Design reference: `docs/design.md`. The client follows the poolside arcade system:
-Poppins plus Geist Mono, flat pool/arcade surfaces, bubblegum action accents,
-Phosphor icons, and scale-bound spacing and radii. Do not reintroduce the old
-scrapbook, Greek journal, or gradient-heavy direction.
+Design reference: `docs/design.md`. The client follows the private press system:
+warm sand surfaces, espresso ink, and a cobalt action accent kept under 5% of the
+page, Manrope with Geist Mono only for ticket data, Phosphor icons, and
+scale-bound spacing and radii. Do not reintroduce the poolside arcade, the
+scrapbook, the Greek journal, or gradient-heavy backgrounds.
 
 ## Architecture invariants
 

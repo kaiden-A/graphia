@@ -13,45 +13,75 @@ export default function OpenGraphImage() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          padding: 64,
-          background: "#131209",
-          color: "#F6FBF7",
+          padding: "64px 72px",
+          background: "#F4ECDF",
+          color: "#241B15",
           fontFamily: "sans-serif",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <div
             style={{
-              width: 56,
-              height: 56,
+              width: 12,
+              height: 12,
+              background: "#0047AB",
               display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "#1FAAC4",
-              borderRadius: 999,
-              color: "#131209",
-              fontSize: 30,
-              fontWeight: 700,
+            }}
+          />
+          <div style={{ fontSize: 30, fontWeight: 700, letterSpacing: -0.5 }}>
+            Graphia
+          </div>
+          <div
+            style={{
+              marginLeft: 8,
+              fontSize: 18,
+              color: "#6A5647",
+              letterSpacing: 2,
+              textTransform: "uppercase",
             }}
           >
-            G
+            Document atelier
           </div>
-          <div style={{ fontSize: 24, fontWeight: 700 }}>Graphia</div>
         </div>
+
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          <div style={{ color: "#F06BB1", fontSize: 24, letterSpacing: 3 }}>
-            DOCUMENT ARCADE
+          <div style={{ fontSize: 20, color: "#6A5647", letterSpacing: 2 }}>
+            DOCUMENT CONVERSION, PRIVATELY RUN
           </div>
-          <div style={{ maxWidth: 900, fontSize: 72, lineHeight: 1, fontWeight: 700 }}>
-            Make a splash
+          <div
+            style={{
+              display: "flex",
+              maxWidth: 900,
+              fontSize: 72,
+              lineHeight: 1.05,
+              fontWeight: 600,
+              letterSpacing: -2.5,
+            }}
+          >
+            A private press for everyday documents.
           </div>
-          <div style={{ maxWidth: 760, color: "#9BB0B5", fontSize: 30, lineHeight: 1.4 }}>
-            Drop a document. Pick a mode. Take a different file.
+          <div style={{ maxWidth: 780, color: "#6A5647", fontSize: 26, lineHeight: 1.4 }}>
+            DOCX, PDF, Markdown, text, and images. Direct uploads and a ticket you can read.
           </div>
         </div>
-        <div style={{ display: "flex", gap: 12 }}>
-          <div style={{ height: 10, width: 180, background: "#1FAAC4", borderRadius: 999 }} />
-          <div style={{ height: 10, width: 80, background: "#F06BB1", borderRadius: 999 }} />
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderTop: "1px solid #DCCDB6",
+            paddingTop: 20,
+            fontSize: 20,
+            color: "#6A5647",
+          }}
+        >
+          <div style={{ display: "flex", gap: 32 }}>
+            <span>25 MB per file</span>
+            <span>5 modes</span>
+            <span>Files expire in 24 hours</span>
+          </div>
+          <div style={{ width: 96, height: 6, background: "#0047AB" }} />
         </div>
       </div>
     ),

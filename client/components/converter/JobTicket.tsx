@@ -1,12 +1,12 @@
 "use client";
 
-import { Check, Joystick, Ticket, X } from "@phosphor-icons/react";
+import { Check, Clock, Hourglass, X } from "@phosphor-icons/react";
 
 import {
-  PoolProgress,
   StatusChip,
+  TicketProgress,
   type RunStatus,
-} from "@/components/arcade/ArcadeBits";
+} from "@/components/converter/StatusBits";
 import { formatBytes, formatDate } from "@/lib/files";
 import type { Conversion } from "@/lib/types";
 
@@ -14,28 +14,28 @@ const STATUS_COPY = {
   PENDING: {
     label: "Queued",
     chip: "QUEUED",
-    note: "Waiting for a free lane. The processor will claim it shortly.",
+    note: "The processor will claim this run shortly. You can leave the page.",
     status: "queued" as RunStatus,
     stage: 0 as const,
   },
   PROCESSING: {
     label: "Running",
     chip: "RUNNING",
-    note: "The conversion is in the water. The lane meter updates automatically.",
+    note: "The conversion is in progress. This ticket updates on its own.",
     status: "running" as RunStatus,
     stage: 1 as const,
   },
   COMPLETED: {
-    label: "Complete",
-    chip: "COMPLETE",
-    note: "Your file is out of the pool. Collect it from the locker below.",
+    label: "Ready",
+    chip: "READY",
+    note: "The result is in the locker below. The download link is issued on request.",
     status: "complete" as RunStatus,
     stage: 2 as const,
   },
   FAILED: {
-    label: "Fault",
-    chip: "FAULT",
-    note: "The run stopped. Read the fault note, then try another mode.",
+    label: "Stopped",
+    chip: "FAILED",
+    note: "The run stopped before it finished. The reason is below.",
     status: "failed" as RunStatus,
     stage: 1 as const,
   },
@@ -59,66 +59,64 @@ export default function JobTicket({ job }: { job: Conversion }) {
       : copy.status === "failed" || copy.status === "expired"
         ? X
         : copy.status === "running"
-          ? Joystick
-          : Ticket;
+          ? Hourglass
+          : Clock;
 
   return (
-    <article className="pass-card" data-status={copy.status}>
-      <div className="pass-top">
-        <div className="pass-label">
-          <Ticket size={20} weight="bold" aria-hidden="true" />
-          Run ticket
-        </div>
+    <article className="ticket" data-status={copy.status}>
+      <div className="ticket-head">
+        <span className="eyebrow caption-3">Run ticket</span>
         <StatusChip status={copy.status} label={copy.chip} />
       </div>
 
-      <p className="pass-number">No. {job.id.slice(0, 8).toUpperCase()}</p>
-      <h1 className="pass-title">{job.originalFilename}</h1>
-      <p className="pass-mode">
-        {job.operationLabel} <span aria-hidden="true">/</span>{" "}
-        <span className="mono">{job.id.slice(0, 4)}</span>
+      <p className="ticket-number mono caption-4">
+        No. {job.id.slice(0, 8).toUpperCase()}
       </p>
+      <h1 className="ticket-title heading-4">{job.originalFilename}</h1>
+      <p className="ticket-mode caption-1">{job.operationLabel}</p>
 
-      <div className="pass-grid">
-        <div>
-          <span className="meta-label">Input</span>
-          <span className="meta-value">{formatBytes(job.fileSize)}</span>
-        </div>
-        <div>
-          <span className="meta-label">Output</span>
-          <span className="meta-value">{job.outputFilename ?? "—"}</span>
-        </div>
-        <div>
-          <span className="meta-label">Started</span>
-          <span className="meta-value">{formatDate(job.startedAt)}</span>
-        </div>
-        <div>
-          <span className="meta-label">Finished</span>
-          <span className="meta-value">{formatDate(job.completedAt)}</span>
-        </div>
-      </div>
+      <div className="perforation" aria-hidden="true" />
 
-      <PoolProgress stage={copy.stage} status={copy.status} />
+      <dl className="ticket-grid">
+        <div>
+          <dt className="caption-4">Input</dt>
+          <dd className="title-3">{formatBytes(job.fileSize)}</dd>
+        </div>
+        <div>
+          <dt className="caption-4">Output</dt>
+          <dd className="title-3">{job.outputFilename ?? "—"}</dd>
+        </div>
+        <div>
+          <dt className="caption-4">Started</dt>
+          <dd className="title-3">{formatDate(job.startedAt)}</dd>
+        </div>
+        <div>
+          <dt className="caption-4">Finished</dt>
+          <dd className="title-3">{formatDate(job.completedAt)}</dd>
+        </div>
+      </dl>
+
+      <TicketProgress stage={copy.stage} status={copy.status} />
 
       <div className={`run-state run-state--${copy.status}`} aria-live="polite">
-        <StatusIcon className="run-state__icon" size={40} weight="bold" aria-hidden="true" />
+        <span className="run-state__icon" aria-hidden="true">
+          <StatusIcon size={20} weight="bold" />
+        </span>
         <div>
-          <strong>{copy.label}</strong>
-          <p className="muted small">{copy.note}</p>
+          <strong className="title-3">{copy.label}</strong>
+          <p className="body-5">{copy.note}</p>
         </div>
       </div>
 
       {job.status === "FAILED" && job.errorMessage ? (
         <div className="alert alert--fault" role="alert">
-          <strong>Fault:</strong> {job.errorMessage}
+          <strong>Reason:</strong> {job.errorMessage}
         </div>
       ) : null}
 
-      <div className="pass-footer">
-        <span className="mono">Locker expires {formatDate(job.expiresAt)}</span>
-        <span className="mono">
-          {job.attempts > 1 ? `${job.attempts} runs` : "Single run"}
-        </span>
+      <div className="ticket-foot caption-5">
+        <span>Locker expires {formatDate(job.expiresAt)}</span>
+        <span>{job.attempts > 1 ? `${job.attempts} attempts` : "Single attempt"}</span>
       </div>
     </article>
   );

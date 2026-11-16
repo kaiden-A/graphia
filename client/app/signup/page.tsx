@@ -1,88 +1,88 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Drop, Ticket, Waves } from "@phosphor-icons/react/dist/ssr";
+
+import Logo from "@/components/brand/Logo";
 
 export const metadata: Metadata = {
   title: "Create account — Graphia",
   description: "Create a Graphia account through Zitadel.",
 };
 
+const FACTS = [
+  { label: "Account", value: "Zitadel SSO" },
+  { label: "Password", value: "Never stored" },
+  { label: "Max file", value: "25 MB" },
+  { label: "Locker", value: "24 hours" },
+];
+
 export default function SignupPage() {
   return (
-    <main className="auth-layout">
-      <aside className="auth-copy">
-        <Link className="brand" href="/">
-          <span className="brand-badge">G</span>
-          <span className="brand-lockup">
-            <span className="brand-name">Graphia</span>
-            <span className="brand-tag">Document arcade</span>
-          </span>
+    <main className="auth-page">
+      <aside className="auth-aside on-dark">
+        <Link className="brand-link" href="/" aria-label="Graphia home">
+          <Logo tone="light" />
         </Link>
 
-        <p className="panel-label">New membership</p>
-        <h1 className="auth-display">
-          Get in
-          <br />
-          Get a pass
-        </h1>
-        <p className="lede">
-          Accounts are created and secured by Elysiaa SSO. Graphia keeps a local identity
-          record and a server session. There is no Graphia password.
-        </p>
-
-        <div className="pass-stub" aria-hidden="true">
-          <span className="pass-stub__stripe" />
-          <span className="pass-stub__label">
-            <Ticket size={20} weight="bold" />
-            New pool pass
-          </span>
-          <span className="pass-stub__big">ADMIT ONE</span>
-          <span className="pass-stub__meta">25 MB / file · 24 hour locker</span>
-          <Waves className="pass-stub__wave" size={56} weight="bold" />
+        <div className="auth-aside-copy">
+          <p className="eyebrow caption-3">New account</p>
+          <h1 className="auth-display heading-2">Open an account.</h1>
+          <p className="body-5">
+            Accounts are created and secured by Elysiaa SSO. Graphia keeps a local identity
+            record and a server session. There is no Graphia password.
+          </p>
         </div>
+
+        <ul className="fact-list">
+          {FACTS.map((fact) => (
+            <li key={fact.label}>
+              <span className="caption-4">{fact.label}</span>
+              <span className="title-3">{fact.value}</span>
+            </li>
+          ))}
+        </ul>
+
+        <p className="auth-aside-foot caption-5">Graphia / Document atelier</p>
       </aside>
 
-      <div className="auth-card">
-        <div className="auth-card-head">
-          <div>
-            <p className="panel-label">Join the arcade</p>
-            <h2 className="panel-title">Claim a pass.</h2>
-          </div>
-          <Drop className="auth-glyph" size={40} weight="bold" aria-hidden="true" />
+      <div className="auth-main">
+        <div className="auth-card">
+          <p className="eyebrow caption-3">Create account</p>
+          <h2 className="heading-4">Claim your account.</h2>
+          <p className="auth-copyline body-5">
+            Zitadel opens its registration page. If registration is invite only, ask the
+            owner for an invitation first.
+          </p>
+
+          <form action="/api/auth/signup" method="get" className="form">
+            <input type="hidden" name="next" value="/convert" />
+            <label className="field">
+              <span className="caption-1">
+                Email <em>optional</em>
+              </span>
+              <input
+                name="login_hint"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+              />
+              <small className="field-hint caption-5">
+                Zitadel uses this to prefill registration.
+              </small>
+            </label>
+            <button className="btn btn-primary btn-large btn-wide" type="submit">
+              Create account with Zitadel
+            </button>
+          </form>
+
+          <p className="auth-switch caption-5">
+            Already have an account? <Link href="/login">Sign in</Link>
+          </p>
+          <p className="auth-legal caption-5">
+            <Link href="/privacy">Privacy</Link>
+            <span aria-hidden="true"> / </span>
+            <Link href="/terms">Terms</Link>
+          </p>
         </div>
-
-        <p className="auth-copyline">
-          Zitadel opens its registration page. If registration is invite only, ask the owner
-          for an invitation first.
-        </p>
-
-        <form action="/api/auth/signup" method="get" className="form">
-          <input type="hidden" name="next" value="/convert" />
-          <label className="field">
-            <span>
-              Email <em>optional</em>
-            </span>
-            <input
-              name="login_hint"
-              type="email"
-              autoComplete="email"
-              placeholder="you@example.com"
-            />
-            <small className="field-hint">Zitadel uses this to prefill registration.</small>
-          </label>
-          <button className="btn btn-primary btn-wide" type="submit">
-            Create account with Zitadel
-          </button>
-        </form>
-
-        <p className="auth-switch">
-          Already have a pass? <Link href="/login">Sign in</Link>
-        </p>
-        <p className="auth-legal">
-          <Link href="/privacy">Privacy</Link>
-          <span aria-hidden="true"> / </span>
-          <Link href="/terms">Terms</Link>
-        </p>
       </div>
     </main>
   );

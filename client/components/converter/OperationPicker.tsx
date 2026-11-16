@@ -1,6 +1,6 @@
 "use client";
 
-import { Lightning } from "@phosphor-icons/react";
+import { Check } from "@phosphor-icons/react";
 
 import type { Operation, OperationId } from "@/lib/types";
 
@@ -21,7 +21,7 @@ interface Props {
 
 export default function OperationPicker({ operations, value, extension, onChange }: Props) {
   return (
-    <div className="operation-grid" role="radiogroup" aria-label="Conversion mode">
+    <div className="operation-list" role="radiogroup" aria-label="Conversion mode">
       {operations.map((operation) => {
         const compatible = !extension || operation.inputExtensions.includes(extension);
         const selected = value === operation.id;
@@ -32,27 +32,33 @@ export default function OperationPicker({ operations, value, extension, onChange
             type="button"
             role="radio"
             aria-checked={selected}
-            className="operation-card"
+            className="operation-row"
             data-selected={selected || undefined}
             data-disabled={!compatible || undefined}
             disabled={!compatible}
             onClick={() => onChange(operation.id)}
             title={compatible ? operation.description : `Not available for .${extension}`}
           >
-            <span className="operation-top">
-              <span className="format-pair">
-                <span className="format-chip">{source}</span>
-                <Lightning className="format-arrow" size={16} weight="bold" aria-hidden="true" />
-                <span className="format-chip format-chip--target">{target}</span>
+            <span className="operation-pair">
+              <span className="format-code caption-3">{source}</span>
+              <span className="operation-arrow" aria-hidden="true">
+                →
               </span>
-              <span className="operation-name">{operation.label}</span>
+              <span className="format-code format-code--out caption-3">{target}</span>
             </span>
-            <span className="operation-meta">
-              {operation.inputExtensions.map((item) => `.${item}`).join(" · ")}
+
+            <span className="operation-main">
+              <span className="operation-name title-3">{operation.label}</span>
+              <span className="operation-meta caption-5">
+                {compatible
+                  ? operation.description
+                  : `Not available for .${extension} files`}
+              </span>
             </span>
-            {!compatible ? (
-              <span className="operation-note">Not for .{extension}</span>
-            ) : null}
+
+            <span className="operation-check" aria-hidden="true">
+              {selected ? <Check size={14} weight="bold" /> : null}
+            </span>
           </button>
         );
       })}

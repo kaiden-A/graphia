@@ -2,25 +2,18 @@
 
 import { useEffect, useRef } from "react";
 
-const DEFAULT_WORDS = [
-  "Drop",
-  "a",
-  "document.",
-  "Pick",
-  "a",
-  "mode.",
-  "Take",
-  "a",
-  "different",
-  "file.",
-];
+type Token =
+  | { type: "word"; word: string; index: number }
+  | { type: "break" };
 
 export default function TaglineReveal({
-  words = DEFAULT_WORDS,
+  lines,
   className = "",
+  label = "Graphia in one line",
 }: {
-  words?: string[];
+  lines: string[];
   className?: string;
+  label?: string;
 }) {
   const wordRefs = useRef<Array<HTMLSpanElement | null>>([]);
 
@@ -49,19 +42,32 @@ export default function TaglineReveal({
     return () => observer.disconnect();
   }, []);
 
+  const tokens: Token[] = [];
+  let index = 0;
+  lines.forEach((line, lineIndex) => {
+    for (const word of line.split(" ")) {
+      tokens.push({ type: "word", word, index: index++ });
+    }
+    if (lineIndex < lines.length - 1) tokens.push({ type: "break" });
+  });
+
   return (
-    <section className={`tagline-reveal ${className}`} aria-label="How Graphia works">
+    <section className={`tagline-reveal ${className}`} aria-label={label}>
       <p>
-        {words.map((word, index) => (
-          <span
-            key={`${word}-${index}`}
-            ref={(node) => {
-              wordRefs.current[index] = node;
-            }}
-          >
-            {word}{" "}
-          </span>
-        ))}
+        {tokens.map((token, tokenIndex) =>
+          token.type === "break" ? (
+            <br key={`break-${tokenIndex}`} />
+          ) : (
+            <span
+              key={`${token.word}-${token.index}`}
+              ref={(node) => {
+                wordRefs.current[token.index] = node;
+              }}
+            >
+              {token.word}{" "}
+            </span>
+          ),
+        )}
       </p>
     </section>
   );

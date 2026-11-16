@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { MarqueeBulbs } from "@/components/arcade/ArcadeBits";
+import Logo from "@/components/brand/Logo";
 import { ApiError, apiJson } from "@/lib/api-client";
 import type { LogoutResponse, User } from "@/lib/types";
 
@@ -50,21 +50,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="arcade-shell">
+    <div className="app">
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
-      <div className="cabinet">
-        <header className="marquee-bar">
-          <Link className="brand" href="/convert" aria-label="Graphia converter">
-            <span className="brand-badge">G</span>
-            <span className="brand-lockup">
-              <span className="brand-name">Graphia</span>
-              <span className="brand-tag">Document arcade</span>
-            </span>
+
+      <header className="app-nav">
+        <div className="app-nav-inner">
+          <Link className="brand-link" href="/convert" aria-label="Graphia converter">
+            <Logo size={30} />
           </Link>
 
-          <nav className="topnav" aria-label="Primary">
+          <nav className="app-nav-links" aria-label="Primary">
             <Link
               className={
                 pathname === "/convert" || pathname.startsWith("/conversions")
@@ -73,46 +70,48 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               }
               href="/convert"
             >
-              The floor
+              Converter
             </Link>
-            <span className="nav-divider" aria-hidden="true" />
+            <Link className="nav-link" href="/">
+              About
+            </Link>
+          </nav>
+
+          <div className="app-nav-user">
             {user ? (
               <>
-                <span className="nav-user" title={user.email}>
+                <span className="nav-user caption-4" title={user.email}>
                   {user.name || user.email}
                 </span>
-                <button className="btn btn-ghost btn-small" onClick={logout} disabled={loggingOut}>
+                <button
+                  className="btn btn-ghost btn-small"
+                  onClick={logout}
+                  disabled={loggingOut}
+                >
                   {loggingOut ? "Signing out…" : "Sign out"}
                 </button>
               </>
             ) : (
-              <span className="nav-user muted">…</span>
+              <span className="nav-user caption-4">…</span>
             )}
-          </nav>
-          <MarqueeBulbs />
-        </header>
+          </div>
+        </div>
+      </header>
 
-        <main className="page" id="main-content">
-          {children}
-        </main>
+      <main className="app-main" id="main-content">
+        {children}
+      </main>
 
-        <footer className="cabinet-footer">
-          <span className="footer-brand">Graphia</span>
-          <span className="footer-separator" aria-hidden="true">
-            /
-          </span>
-          <span>Open all night. Files leave at closing.</span>
-          <span className="footer-legal">
+      <footer className="app-footer">
+        <div className="app-footer-inner caption-5">
+          <span>Graphia / Document atelier</span>
+          <span className="app-footer-links">
             <Link href="/privacy">Privacy</Link>
             <Link href="/terms">Terms</Link>
           </span>
-          <span className="footer-leds" aria-hidden="true">
-            <i />
-            <i />
-            <i />
-          </span>
-        </footer>
-      </div>
+          <span>Files expire in 24 hours</span>
+        </div>
+      </footer>
     </div>
   );
 }

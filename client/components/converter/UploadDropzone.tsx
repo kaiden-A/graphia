@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 
-import { Drop } from "@phosphor-icons/react";
+import { ArrowUp } from "@phosphor-icons/react";
 
 interface Props {
   accept: string;
@@ -59,11 +59,13 @@ export default function UploadDropzone({ accept, disabled, onFile }: Props) {
           event.target.value = "";
         }}
       />
-      <Drop className="dropzone-icon" size={44} weight="bold" aria-hidden="true" />
-      <span className="dropzone-title">
-        {dragging ? "Let it drop" : "Drop a file into the pool"}
+      <span className="dropzone-glyph" aria-hidden="true">
+        <ArrowUp size={20} weight="bold" />
       </span>
-      <span className="dropzone-sub">or choose from the locker · 25 MB maximum</span>
+      <span className="dropzone-title title-1">
+        {dragging ? "Let it drop" : "Drop a document"}
+      </span>
+      <span className="dropzone-sub caption-1">or choose a file · 25 MB maximum</span>
     </div>
   );
 }

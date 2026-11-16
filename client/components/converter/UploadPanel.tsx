@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from "react";
 import OperationPicker from "@/components/converter/OperationPicker";
 import SelectedFile from "@/components/converter/SelectedFile";
 import UploadDropzone from "@/components/converter/UploadDropzone";
-import { Drop, Lightning } from "@phosphor-icons/react";
 
 import { ApiError, apiJson, messageForError } from "@/lib/api-client";
 import {
@@ -172,12 +171,12 @@ export default function UploadPanel() {
     <section className="control-panel" aria-labelledby="upload-title">
       <div className="panel-head">
         <div>
-          <p className="panel-label">Insert document</p>
-          <h2 id="upload-title" className="panel-title">
-            Drop it in the deep end.
+          <p className="eyebrow caption-3">Upload</p>
+          <h2 id="upload-title" className="heading-5">
+            Choose a document.
           </h2>
         </div>
-        <Drop className="panel-glyph" size={40} weight="bold" aria-hidden="true" />
+        <span className="panel-note caption-4">25 MB maximum</span>
       </div>
 
       <UploadDropzone accept={accept} disabled={busy} onFile={chooseFile} />
@@ -201,8 +200,10 @@ export default function UploadPanel() {
       ) : null}
 
       <div className="section-label">
-        <span>Pick a mode</span>
-        {extension ? <span className="mono muted">.{extension}</span> : null}
+        <span className="caption-1">Mode</span>
+        {extension ? (
+          <span className="format-code caption-5">.{extension}</span>
+        ) : null}
       </div>
 
       <OperationPicker
@@ -223,28 +224,27 @@ export default function UploadPanel() {
           <div className="progress-track">
             <div className="progress-fill" style={{ width: `${progress}%` }} />
           </div>
-          <span className="progress-label mono">{progress}% uploaded</span>
+          <span className="progress-label caption-4">{progress}% uploaded</span>
         </div>
       ) : null}
 
       <div className="upload-actions">
         <button
           type="button"
-          className="btn btn-primary btn-wide"
+          className="btn btn-primary btn-large"
           onClick={convert}
           disabled={!file || !operation || busy || operations.length === 0}
         >
-          <Lightning className="btn-icon" size={20} weight="bold" aria-hidden="true" />
           {phase === "creating"
-            ? "Priming the pump…"
+            ? "Preparing the upload…"
             : phase === "uploading"
-              ? `Diving in ${progress}%…`
+              ? `Uploading ${progress}%…`
               : phase === "confirming"
-                ? "Starting the run…"
+                ? "Opening the ticket…"
                 : "Start conversion"}
         </button>
-        <p className="fine-print">
-          25 MB maximum · one file · the locker holds it for 24 hours
+        <p className="fine-print caption-5">
+          One file per run · 25 MB maximum · files expire in 24 hours
         </p>
       </div>
     </section>

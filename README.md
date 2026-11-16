@@ -109,7 +109,7 @@ are the runtime contract.
 
 - `docs/environment.md` — every env var, its scope, and the API/processor split.
 - `docs/auth.md` — Zitadel setup, OIDC flow, provisioning, and troubleshooting.
-- `docs/design.md` — poolside arcade palette, type, spacing, components, and motion.
+- `docs/design.md` — private press palette, type, spacing, components, and motion.
 - `docs/architecture.md` — request flow, status transitions, failure recovery.
 - `docs/storage.md` — R2 keys, CORS, presigned URLs, lifecycle rules.
 - `docs/conversions.md` — operation matrix, limits, adding a converter.
