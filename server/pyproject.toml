@@ -1,0 +1,53 @@
+[project]
+name = "graphia-server"
+version = "0.1.0"
+description = "Graphia API and conversion processor"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "alembic>=1.14,<2.0",
+  "boto3>=1.35,<2.0",
+  "email-validator>=2.2,<3.0",
+  "fastapi>=0.115,<1.0",
+  "httpx>=0.28,<1.0",
+  "pg8000>=1.31,<2.0",
+  "pydantic-settings>=2.7,<3.0",
+  "pwdlib[argon2]>=0.2,<1.0",
+  "python-multipart>=0.0.20,<1.0",
+  "sqlalchemy>=2.0.36,<2.1",
+  "uvicorn[standard]>=0.34,<1.0",
+]
+
+[dependency-groups]
+processor = [
+  "charset-normalizer>=3.4,<4.0",
+  "markdown>=3.7,<4.0",
+  "pillow>=11.0,<13.0",
+  "pymupdf>=1.25,<2.0",
+  "pypdf>=5.1,<7.0",
+]
+
+dev = [
+  "pytest>=8.3,<9.0",
+  "pytest-cov>=6.0,<7.0",
+  "python-docx>=1.1,<2.0",
+  "ruff>=0.8,<1.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+markers = [
+  "integration: requires real Neon and R2 credentials",
+]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["B008", "UP037"]

@@ -1,0 +1,5 @@
+# Secria link file. Safe to commit: it contains no secrets.
+workspace: elysiaa
+project: graphia
+environment: dev
+server: https://elysiaa-secria-server-1023333674013.asia-southeast1.run.app

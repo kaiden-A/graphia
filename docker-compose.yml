@@ -1,0 +1,22 @@
+services:
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.api
+    env_file:
+      - ./server/.env
+    environment:
+      PROCESSOR_URL: http://processor:8080
+    ports:
+      - "8000:8080"
+    depends_on:
+      - processor
+
+  processor:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.processor
+    env_file:
+      - ./server/.env
+    ports:
+      - "8001:8080"

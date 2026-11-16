@@ -1,0 +1,23 @@
+{
+  "name": "graphia",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Document conversion app: Next.js client, FastAPI API, FastAPI processor.",
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "concurrently --kill-others-on-fail --names api,processor,client --prefix-colors blue,magenta,green \"npm:dev:api\" \"npm:dev:processor\" \"npm:dev:client\"",
+    "dev:api": "uv run --directory server python -m uvicorn app.main:app --reload --port 8000",
+    "dev:processor": "uv run --directory server python -m uvicorn processor.main:app --reload --port 8001",
+    "dev:client": "npm --prefix client run dev",
+    "build": "npm --prefix client run build",
+    "typecheck": "npm --prefix client run typecheck",
+    "test": "uv run --directory server python -m pytest",
+    "test:unit": "uv run --directory server python -m pytest -m \"not integration\"",
+    "test:integration": "uv run --directory server python -m pytest -m integration",
+    "lint:server": "uv run --directory server python -m ruff check .",
+    "format:server": "uv run --directory server python -m ruff format ."
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
