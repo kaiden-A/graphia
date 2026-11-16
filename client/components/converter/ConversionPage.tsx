@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { Drop, Joystick, Lightning } from "@phosphor-icons/react";
+
 import JobTicket from "@/components/converter/JobTicket";
-import { CompassIcon, ScrollIcon } from "@/components/scrapbook/icons";
-import { PaperNote, TapeStrip } from "@/components/scrapbook/Ornaments";
 import { apiJson, messageForError } from "@/lib/api-client";
 import type { DownloadTicket } from "@/lib/types";
 import { useConversionPolling } from "@/lib/useConversionPolling";
@@ -46,14 +46,15 @@ export default function ConversionPage({ id }: { id: string }) {
 
   if (notFound) {
     return (
-      <section className="center-card card">
-        <p className="eyebrow">Not found</p>
-        <h1 className="card-title">This ticket is not in your stack.</h1>
+      <section className="center-card">
+        <Drop className="center-glyph" size={56} weight="bold" aria-hidden="true" />
+        <p className="panel-label">Empty lane</p>
+        <h1 className="panel-title">This ticket is not in the pool.</h1>
         <p className="muted">
-          It may have been deleted, expired, or created under another account.
+          It may have been deleted, expired, or opened under another account.
         </p>
-        <Link className="btn btn-primary" href="/">
-          Start a conversion
+        <Link className="btn btn-primary" href="/convert">
+          Start a run
         </Link>
       </section>
     );
@@ -61,8 +62,8 @@ export default function ConversionPage({ id }: { id: string }) {
 
   if (loading && !job) {
     return (
-      <section className="center-card card" aria-live="polite">
-        <p className="eyebrow">Loading ticket</p>
+      <section className="center-card" aria-live="polite">
+        <p className="panel-label">Loading lane</p>
         <div className="skeleton skeleton-title" />
         <div className="skeleton skeleton-line" />
         <div className="skeleton skeleton-line short" />
@@ -72,12 +73,13 @@ export default function ConversionPage({ id }: { id: string }) {
 
   if (!job) {
     return (
-      <section className="center-card card">
-        <p className="eyebrow">Something went wrong</p>
-        <h1 className="card-title">The ticket could not be loaded.</h1>
-        <p className="error-banner">{error ?? "Try refreshing the page."}</p>
-        <Link className="btn btn-primary" href="/">
-          Back to converter
+      <section className="center-card">
+        <Drop className="center-glyph" size={56} weight="bold" aria-hidden="true" />
+        <p className="panel-label">Lane closed</p>
+        <h1 className="panel-title">The ticket could not be loaded.</h1>
+        <p className="alert">{error ?? "Try refreshing the page."}</p>
+        <Link className="btn btn-primary" href="/convert">
+          Back to the arcade
         </Link>
       </section>
     );
@@ -86,57 +88,56 @@ export default function ConversionPage({ id }: { id: string }) {
   return (
     <section className="job-page">
       <div className="page-lead">
-        <Link className="back-link" href="/">
-          ← Back to the desk
+        <Link className="back-link" href="/convert">
+          ← Back to the floor
         </Link>
-        <p className="eyebrow">The expedition desk</p>
+        <p className="panel-label">Run desk</p>
       </div>
 
       <div className="job-layout">
         <JobTicket job={job} />
 
-        <aside className="job-actions card">
-          <TapeStrip className="action-tape" rotate={-5} />
-          <p className="eyebrow">Next step</p>
+        <aside className="action-deck">
+          <p className="panel-label">Locker</p>
           {job.status === "COMPLETED" && job.downloadAvailable ? (
             <>
-              <h2 className="card-title">Bring it home.</h2>
+              <h2 className="panel-title">Take the file.</h2>
               <p className="muted">
-                The download link is temporary. Request it when you are ready to take the
-                file.
+                This link is a temporary locker key. Request it only when you are ready to
+                collect.
               </p>
               <button
                 className="btn btn-primary btn-wide"
                 onClick={download}
                 disabled={downloading}
               >
-                <ScrollIcon className="btn-icon" />
-                {downloading ? "Preparing the scroll…" : "Download result"}
+                <Lightning className="btn-icon" size={20} weight="bold" aria-hidden="true" />
+                {downloading ? "Opening the locker…" : "Download result"}
               </button>
             </>
           ) : null}
 
           {job.status === "PENDING" || job.status === "PROCESSING" ? (
             <>
-              <h2 className="card-title">The passage is underway.</h2>
+              <h2 className="panel-title">The run is in the water.</h2>
               <p className="muted">
-                You can leave this page and return to the ticket. The processor keeps
-                working in the background.
+                You can leave this page and return to the ticket. The processor keeps the
+                lane moving in the background.
               </p>
-              <div className="passage-motion" aria-hidden="true">
-                <CompassIcon />
-                <span>following the route</span>
+              <div className="joystick-motion" aria-hidden="true">
+                <Joystick size={32} weight="bold" />
+                <span>lane active</span>
               </div>
             </>
           ) : null}
 
           {job.status === "FAILED" ? (
             <>
-              <h2 className="card-title">A storm on the passage.</h2>
+              <h2 className="panel-title">Fault on the run.</h2>
               <p className="muted">
-                Read the note on the ticket, then try a different file or method.
+                Read the fault note on the ticket, then try another file or mode.
               </p>
-              <Link className="btn btn-primary btn-wide" href="/">
+              <Link className="btn btn-primary btn-wide" href="/convert">
                 Try another file
               </Link>
             </>
@@ -144,23 +145,23 @@ export default function ConversionPage({ id }: { id: string }) {
 
           {job.status === "COMPLETED" && !job.downloadAvailable ? (
             <>
-              <h2 className="card-title">The rest time is over.</h2>
+              <h2 className="panel-title">Locker cleared.</h2>
               <p className="muted">
-                Stored files are removed after their expiry. Send the document again to make
-                a new ticket.
+                Files leave when the clock runs out. Send the document again for a new run.
               </p>
-              <Link className="btn btn-primary btn-wide" href="/">
+              <Link className="btn btn-primary btn-wide" href="/convert">
                 Send it again
               </Link>
             </>
           ) : null}
 
-          <PaperNote className="action-note" rotate={1.4}>
-            One ticket. One result. The download link is short-lived on purpose.
-          </PaperNote>
+          <div className="locker-note">
+            <Drop size={24} weight="bold" aria-hidden="true" />
+            <span>One run. One output. The download key expires quickly on purpose.</span>
+          </div>
 
           {downloadError ? (
-            <p className="error-banner" role="alert">
+            <p className="alert" role="alert">
               {downloadError}
             </p>
           ) : null}
@@ -172,12 +173,12 @@ export default function ConversionPage({ id }: { id: string }) {
             onClick={remove}
             disabled={deleting || job.status === "PROCESSING"}
           >
-            {deleting ? "Discarding…" : "Discard ticket"}
+            {deleting ? "Ejecting…" : "Eject job"}
           </button>
           <p className="fine-print">
             {job.status === "PROCESSING"
-              ? "A running passage cannot be discarded."
-              : "Discarding removes the input and output objects from storage."}
+              ? "A running job cannot be ejected."
+              : "Ejecting removes the input and output objects from storage."}
           </p>
         </aside>
       </div>

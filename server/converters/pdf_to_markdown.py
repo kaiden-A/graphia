@@ -20,7 +20,7 @@ def convert(input_path: Path, context: ConversionContext) -> ConversionResult:
         raise ConversionError("This PDF could not be opened.") from exc
 
     if reader.is_encrypted:
-        raise ConversionError("This PDF is password-protected. Remove the password and try again.")
+        raise ConversionError("This PDF is password protected. Remove the password and try again.")
     if len(reader.pages) > MAX_PAGES:
         raise ConversionError(f"This PDF has more than {MAX_PAGES} pages.")
 

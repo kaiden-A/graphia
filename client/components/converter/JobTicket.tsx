@@ -1,47 +1,42 @@
 "use client";
 
+import { Check, Joystick, Ticket, X } from "@phosphor-icons/react";
+
 import {
-  BoatIcon,
-  CompassIcon,
-  LaurelIcon,
-  StormIcon,
-} from "@/components/scrapbook/icons";
-import {
-  RouteMap,
-  TapeStrip,
-  WaxSeal,
-  type SealStatus,
-} from "@/components/scrapbook/Ornaments";
+  PoolProgress,
+  StatusChip,
+  type RunStatus,
+} from "@/components/arcade/ArcadeBits";
 import { formatBytes, formatDate } from "@/lib/files";
 import type { Conversion } from "@/lib/types";
 
 const STATUS_COPY = {
   PENDING: {
     label: "Queued",
-    stamp: "QUEUED",
-    note: "The expedition is waiting at the dock. The processor will claim it shortly.",
-    seal: "queued" as SealStatus,
+    chip: "QUEUED",
+    note: "Waiting for a free lane. The processor will claim it shortly.",
+    status: "queued" as RunStatus,
     stage: 0 as const,
   },
   PROCESSING: {
-    label: "Underway",
-    stamp: "UNDERWAY",
-    note: "The method is running. The route updates automatically.",
-    seal: "processing" as SealStatus,
+    label: "Running",
+    chip: "RUNNING",
+    note: "The conversion is in the water. The lane meter updates automatically.",
+    status: "running" as RunStatus,
     stage: 1 as const,
   },
   COMPLETED: {
     label: "Complete",
-    stamp: "COMPLETE",
-    note: "The result has arrived. The download ticket is ready below.",
-    seal: "complete" as SealStatus,
+    chip: "COMPLETE",
+    note: "Your file is out of the pool. Collect it from the locker below.",
+    status: "complete" as RunStatus,
     stage: 2 as const,
   },
   FAILED: {
-    label: "Failed",
-    stamp: "STORM",
-    note: "The passage did not finish. The note below says what happened.",
-    seal: "failed" as SealStatus,
+    label: "Fault",
+    chip: "FAULT",
+    note: "The run stopped. Read the fault note, then try another mode.",
+    status: "failed" as RunStatus,
     stage: 1 as const,
   },
 } as const;
@@ -51,64 +46,62 @@ export default function JobTicket({ job }: { job: Conversion }) {
   const copy = isExpired
     ? {
         label: "Expired",
-        stamp: "EXPIRED",
-        note: "The stored file has passed its rest time. Start a new expedition.",
-        seal: "expired" as SealStatus,
+        chip: "EXPIRED",
+        note: "The locker has been cleared. Send the file again to start a new run.",
+        status: "expired" as RunStatus,
         stage: 2 as const,
       }
     : STATUS_COPY[job.status];
 
   const StatusIcon =
-    copy.seal === "complete"
-      ? LaurelIcon
-      : copy.seal === "failed"
-        ? StormIcon
-        : copy.seal === "processing"
-          ? CompassIcon
-          : BoatIcon;
+    copy.status === "complete"
+      ? Check
+      : copy.status === "failed" || copy.status === "expired"
+        ? X
+        : copy.status === "running"
+          ? Joystick
+          : Ticket;
 
   return (
-    <article className="ticket card">
-      <TapeStrip className="ticket-tape" rotate={4} />
-      <div className="ticket-top">
-        <div>
-          <p className="eyebrow">Expedition ticket</p>
-          <p className="folio-number">No. {job.id.slice(0, 8).toUpperCase()}</p>
+    <article className="pass-card" data-status={copy.status}>
+      <div className="pass-top">
+        <div className="pass-label">
+          <Ticket size={20} weight="bold" aria-hidden="true" />
+          Run ticket
         </div>
-        <WaxSeal key={job.status} status={copy.seal} label={copy.stamp} />
+        <StatusChip status={copy.status} label={copy.chip} />
       </div>
 
-      <h1 className="ticket-title">{job.originalFilename}</h1>
-      <p className="ticket-sub">
-        {job.operationLabel} <span className="muted">·</span>{" "}
+      <p className="pass-number">No. {job.id.slice(0, 8).toUpperCase()}</p>
+      <h1 className="pass-title">{job.originalFilename}</h1>
+      <p className="pass-mode">
+        {job.operationLabel} <span aria-hidden="true">/</span>{" "}
         <span className="mono">{job.id.slice(0, 4)}</span>
       </p>
 
-      <div className="ticket-perf" />
-
-      <div className="ticket-meta">
+      <div className="pass-grid">
         <div>
           <span className="meta-label">Input</span>
           <span className="meta-value">{formatBytes(job.fileSize)}</span>
         </div>
         <div>
-          <span className="meta-label">Result</span>
+          <span className="meta-label">Output</span>
           <span className="meta-value">{job.outputFilename ?? "—"}</span>
         </div>
         <div>
-          <span className="meta-label">Departed</span>
+          <span className="meta-label">Started</span>
           <span className="meta-value">{formatDate(job.startedAt)}</span>
         </div>
         <div>
-          <span className="meta-label">Arrived</span>
+          <span className="meta-label">Finished</span>
           <span className="meta-value">{formatDate(job.completedAt)}</span>
         </div>
       </div>
 
-      <RouteMap stage={copy.stage} compact />
+      <PoolProgress stage={copy.stage} status={copy.status} />
 
-      <div className={`ticket-status ticket-status--${copy.seal}`} aria-live="polite">
-        <StatusIcon className="status-icon" />
+      <div className={`run-state run-state--${copy.status}`} aria-live="polite">
+        <StatusIcon className="run-state__icon" size={40} weight="bold" aria-hidden="true" />
         <div>
           <strong>{copy.label}</strong>
           <p className="muted small">{copy.note}</p>
@@ -116,15 +109,15 @@ export default function JobTicket({ job }: { job: Conversion }) {
       </div>
 
       {job.status === "FAILED" && job.errorMessage ? (
-        <div className="error-banner" role="alert">
-          <strong>What happened:</strong> {job.errorMessage}
+        <div className="alert alert--fault" role="alert">
+          <strong>Fault:</strong> {job.errorMessage}
         </div>
       ) : null}
 
-      <div className="ticket-footer">
-        <span className="mono">Expires {formatDate(job.expiresAt)}</span>
+      <div className="pass-footer">
+        <span className="mono">Locker expires {formatDate(job.expiresAt)}</span>
         <span className="mono">
-          {job.attempts > 1 ? `${job.attempts} attempts` : "Single passage"}
+          {job.attempts > 1 ? `${job.attempts} runs` : "Single run"}
         </span>
       </div>
     </article>

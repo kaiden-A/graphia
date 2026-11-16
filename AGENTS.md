@@ -15,6 +15,11 @@ Environment scope reference: `docs/environment.md`. Local `server/.env` contains
 shared, API-only, and processor-only values for convenience; production must give
 each service only its own scope.
 
+Design reference: `docs/design.md`. The client follows the poolside arcade system:
+Poppins plus Geist Mono, flat pool/arcade surfaces, bubblegum action accents,
+Phosphor icons, and scale-bound spacing and radii. Do not reintroduce the old
+scrapbook, Greek journal, or gradient-heavy direction.
+
 ## Architecture invariants
 
 - Service A (`server/app`) is public. Service B (`server/processor`) is internal.

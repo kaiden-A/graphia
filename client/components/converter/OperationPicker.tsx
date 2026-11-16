@@ -1,21 +1,16 @@
 "use client";
 
-import {
-  AmphoraIcon,
-  QuillIcon,
-  ScrollIcon,
-  TabletIcon,
-  TempleIcon,
-} from "@/components/scrapbook/icons";
+import { Lightning } from "@phosphor-icons/react";
+
 import type { Operation, OperationId } from "@/lib/types";
 
-const GLYPHS = {
-  docx_to_pdf: ScrollIcon,
-  pdf_to_markdown: TabletIcon,
-  txt_to_markdown: QuillIcon,
-  markdown_to_pdf: TempleIcon,
-  images_to_pdf: AmphoraIcon,
-} as const;
+const FORMATS: Record<OperationId, [string, string]> = {
+  docx_to_pdf: ["DOCX", "PDF"],
+  pdf_to_markdown: ["PDF", "MD"],
+  txt_to_markdown: ["TXT", "MD"],
+  markdown_to_pdf: ["MD", "PDF"],
+  images_to_pdf: ["IMG", "PDF"],
+};
 
 interface Props {
   operations: Operation[];
@@ -26,11 +21,11 @@ interface Props {
 
 export default function OperationPicker({ operations, value, extension, onChange }: Props) {
   return (
-    <div className="operation-grid" role="radiogroup" aria-label="Conversion operation">
+    <div className="operation-grid" role="radiogroup" aria-label="Conversion mode">
       {operations.map((operation) => {
         const compatible = !extension || operation.inputExtensions.includes(extension);
         const selected = value === operation.id;
-        const Glyph = GLYPHS[operation.id];
+        const [source, target] = FORMATS[operation.id];
         return (
           <button
             key={operation.id}
@@ -45,15 +40,15 @@ export default function OperationPicker({ operations, value, extension, onChange
             title={compatible ? operation.description : `Not available for .${extension}`}
           >
             <span className="operation-top">
-              <Glyph className="operation-icon" />
+              <span className="format-pair">
+                <span className="format-chip">{source}</span>
+                <Lightning className="format-arrow" size={16} weight="bold" aria-hidden="true" />
+                <span className="format-chip format-chip--target">{target}</span>
+              </span>
               <span className="operation-name">{operation.label}</span>
             </span>
             <span className="operation-meta">
               {operation.inputExtensions.map((item) => `.${item}`).join(" · ")}
-              <span className="operation-arrow" aria-hidden="true">
-                →
-              </span>
-              <span className="mono">.{operation.outputExtension}</span>
             </span>
             {!compatible ? (
               <span className="operation-note">Not for .{extension}</span>

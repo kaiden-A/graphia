@@ -6,7 +6,8 @@ import { useEffect, useMemo, useState } from "react";
 import OperationPicker from "@/components/converter/OperationPicker";
 import SelectedFile from "@/components/converter/SelectedFile";
 import UploadDropzone from "@/components/converter/UploadDropzone";
-import { ScrollIcon } from "@/components/scrapbook/icons";
+import { Drop, Lightning } from "@phosphor-icons/react";
+
 import { ApiError, apiJson, messageForError } from "@/lib/api-client";
 import {
   MAX_UPLOAD_BYTES,
@@ -168,15 +169,15 @@ export default function UploadPanel() {
   }
 
   return (
-    <section className="dispatch-card card" aria-labelledby="upload-title">
-      <div className="dispatch-head">
+    <section className="control-panel" aria-labelledby="upload-title">
+      <div className="panel-head">
         <div>
-          <p className="eyebrow">Dispatch</p>
-          <h2 id="upload-title" className="card-title">
-            What are we sending?
+          <p className="panel-label">Insert document</p>
+          <h2 id="upload-title" className="panel-title">
+            Drop it in the deep end.
           </h2>
         </div>
-        <ScrollIcon className="card-glyph" />
+        <Drop className="panel-glyph" size={40} weight="bold" aria-hidden="true" />
       </div>
 
       <UploadDropzone accept={accept} disabled={busy} onFile={chooseFile} />
@@ -194,13 +195,13 @@ export default function UploadPanel() {
       ) : null}
 
       {operationsError ? (
-        <p className="error-banner" role="alert">
+        <p className="alert" role="alert">
           {operationsError}
         </p>
       ) : null}
 
       <div className="section-label">
-        <span>Choose the method</span>
+        <span>Pick a mode</span>
         {extension ? <span className="mono muted">.{extension}</span> : null}
       </div>
 
@@ -212,7 +213,7 @@ export default function UploadPanel() {
       />
 
       {error ? (
-        <p className="error-banner" role="alert">
+        <p className="alert" role="alert">
           {error}
         </p>
       ) : null}
@@ -233,16 +234,17 @@ export default function UploadPanel() {
           onClick={convert}
           disabled={!file || !operation || busy || operations.length === 0}
         >
+          <Lightning className="btn-icon" size={20} weight="bold" aria-hidden="true" />
           {phase === "creating"
-            ? "Preparing the ticket…"
+            ? "Priming the pump…"
             : phase === "uploading"
-              ? `Lifting the file ${progress}%…`
+              ? `Diving in ${progress}%…`
               : phase === "confirming"
-                ? "Calling the processor…"
+                ? "Starting the run…"
                 : "Start conversion"}
         </button>
         <p className="fine-print">
-          25 MB maximum · one document · files rest for 24 hours
+          25 MB maximum · one file · the locker holds it for 24 hours
         </p>
       </div>
     </section>

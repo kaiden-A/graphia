@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 
-import { ScrollIcon } from "@/components/scrapbook/icons";
+import { Drop } from "@phosphor-icons/react";
 
 interface Props {
   accept: string;
@@ -59,11 +59,11 @@ export default function UploadDropzone({ accept, disabled, onFile }: Props) {
           event.target.value = "";
         }}
       />
-      <ScrollIcon className="dropzone-icon" />
+      <Drop className="dropzone-icon" size={44} weight="bold" aria-hidden="true" />
       <span className="dropzone-title">
-        {dragging ? "Set it down here" : "Drop a document here"}
+        {dragging ? "Let it drop" : "Drop a file into the pool"}
       </span>
-      <span className="dropzone-sub">or choose a file · 25 MB maximum</span>
+      <span className="dropzone-sub">or choose from the locker · 25 MB maximum</span>
     </div>
   );
 }

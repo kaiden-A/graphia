@@ -1,39 +1,42 @@
 import type { Metadata } from "next";
-import { Caveat, GFS_Didot, Karla } from "next/font/google";
+import { Geist_Mono, Poppins } from "next/font/google";
 
 import "./globals.css";
 
-const display = GFS_Didot({
+const body = Poppins({
   subsets: ["latin"],
-  weight: "400",
-  variable: "--font-display",
-  display: "swap",
-});
-
-const body = Karla({
-  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-body",
   display: "swap",
 });
 
-const hand = Caveat({
+const mono = Geist_Mono({
   subsets: ["latin"],
-  variable: "--font-hand",
+  variable: "--font-mono",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Graphia — an expedition for documents",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  title: "Graphia — document arcade",
   description:
-    "A small private field desk for converting DOCX, PDF, Markdown, text, and images.",
+    "A poolside arcade for converting DOCX, PDF, Markdown, text, and images.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+  openGraph: {
+    title: "Graphia — document arcade",
+    description:
+      "Drop a document. Pick a mode. Take a different file.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${display.variable} ${body.variable} ${hand.variable}`}>
-        {children}
-      </body>
+      <body className={`${body.variable} ${mono.variable}`}>{children}</body>
     </html>
   );
 }

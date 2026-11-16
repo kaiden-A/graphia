@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { MeanderRule } from "@/components/scrapbook/Ornaments";
+import { MarqueeBulbs } from "@/components/arcade/ArcadeBits";
 import { ApiError, apiJson } from "@/lib/api-client";
 import type { LogoutResponse, User } from "@/lib/types";
 
@@ -50,22 +50,32 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="site-shell">
-      <div className="folio">
-        <header className="topbar">
-          <Link className="brand" href="/" aria-label="Graphia home">
-            <span className="brand-mark">G</span>
+    <div className="arcade-shell">
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
+      <div className="cabinet">
+        <header className="marquee-bar">
+          <Link className="brand" href="/convert" aria-label="Graphia converter">
+            <span className="brand-badge">G</span>
             <span className="brand-lockup">
-              <span className="brand-word">Graphia</span>
-              <span className="brand-sub">document expeditions</span>
+              <span className="brand-name">Graphia</span>
+              <span className="brand-tag">Document arcade</span>
             </span>
           </Link>
 
           <nav className="topnav" aria-label="Primary">
-            <Link className={pathname === "/" ? "nav-link is-active" : "nav-link"} href="/">
-              The desk
+            <Link
+              className={
+                pathname === "/convert" || pathname.startsWith("/conversions")
+                  ? "nav-link is-active"
+                  : "nav-link"
+              }
+              href="/convert"
+            >
+              The floor
             </Link>
-            <span className="nav-sep" aria-hidden="true" />
+            <span className="nav-divider" aria-hidden="true" />
             {user ? (
               <>
                 <span className="nav-user" title={user.email}>
@@ -79,15 +89,28 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <span className="nav-user muted">…</span>
             )}
           </nav>
+          <MarqueeBulbs />
         </header>
 
-        <MeanderRule className="folio-meander" />
-        <main className="page">{children}</main>
+        <main className="page" id="main-content">
+          {children}
+        </main>
 
-        <footer className="footer">
-          <span className="footer-mark">Graphia</span>
-          <span className="footer-rule" aria-hidden="true" />
-          <span className="muted">Documents out, a little further than they came.</span>
+        <footer className="cabinet-footer">
+          <span className="footer-brand">Graphia</span>
+          <span className="footer-separator" aria-hidden="true">
+            /
+          </span>
+          <span>Open all night. Files leave at closing.</span>
+          <span className="footer-legal">
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/terms">Terms</Link>
+          </span>
+          <span className="footer-leds" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+          </span>
         </footer>
       </div>
     </div>

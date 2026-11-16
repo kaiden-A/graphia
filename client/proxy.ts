@@ -16,5 +16,5 @@ export default function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/conversions/:path*"],
+  matcher: ["/convert", "/conversions/:path*"],
 };

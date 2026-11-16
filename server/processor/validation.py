@@ -53,7 +53,7 @@ def _validate_pdf(path: Path) -> None:
     except Exception as exc:
         raise ConversionError("This PDF could not be opened.") from exc
     if reader.is_encrypted:
-        raise ConversionError("This PDF is password-protected. Remove the password and try again.")
+        raise ConversionError("This PDF is password protected. Remove the password and try again.")
     if len(reader.pages) > MAX_PDF_PAGES:
         raise ConversionError(f"This PDF has more than {MAX_PDF_PAGES} pages.")
 

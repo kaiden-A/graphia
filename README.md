@@ -51,8 +51,9 @@ A small, asynchronous document converter.
    uv run --directory server python -m alembic upgrade head
    ```
 
-6. Sign in at `/login` through Zitadel. `/signup` opens the Zitadel
-   registration flow with `prompt=create`.
+6. Visit `/` for the landing page, then `/convert` for the converter. Sign in at
+   `/login` through Zitadel. `/signup` opens the Zitadel registration flow with
+   `prompt=create`.
 
 ## Tests
 
@@ -108,6 +109,7 @@ are the runtime contract.
 
 - `docs/environment.md` — every env var, its scope, and the API/processor split.
 - `docs/auth.md` — Zitadel setup, OIDC flow, provisioning, and troubleshooting.
+- `docs/design.md` — poolside arcade palette, type, spacing, components, and motion.
 - `docs/architecture.md` — request flow, status transitions, failure recovery.
 - `docs/storage.md` — R2 keys, CORS, presigned URLs, lifecycle rules.
 - `docs/conversions.md` — operation matrix, limits, adding a converter.
