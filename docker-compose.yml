@@ -1,3 +1,6 @@
+# Local development uses one shared server/.env for convenience.
+# In production, give each service only its scoped variables; see
+# docs/environment.md.
 services:
   api:
     build:

@@ -28,6 +28,16 @@ def new_uuid() -> uuid.UUID:
     return uuid.uuid4()
 
 
+def local_path(value: str | None, *, default: str = "/") -> str:
+    """Allow only same-site paths for post-login redirects."""
+    candidate = (value or "").strip()
+    if not candidate.startswith("/") or candidate.startswith("//"):
+        return default
+    if "\\" in candidate or "\x00" in candidate:
+        return default
+    return candidate
+
+
 _UNSAFE_FILENAME = re.compile(r"[^\w .()\-]+", re.UNICODE)
 _MULTI_SPACE = re.compile(r"\s+")
 

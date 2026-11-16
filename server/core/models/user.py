@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, String, Uuid
+from sqlalchemy import DateTime, String, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.models.base import Base
@@ -12,11 +12,17 @@ from core.utils import utcnow
 
 class User(Base):
     __tablename__ = "users"
+    __table_args__ = (
+        UniqueConstraint("idp_issuer", "zitadel_sub", name="uq_users_idp_subject"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True, nullable=False)
     name: Mapped[str | None] = mapped_column(String(120), nullable=True)
-    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    idp_issuer: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    zitadel_sub: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # Kept nullable for the migration window; Zitadel is the only sign-in path.
+    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, nullable=False
     )

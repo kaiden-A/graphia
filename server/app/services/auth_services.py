@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hmac
 from datetime import timedelta
 
 from sqlalchemy import select
@@ -11,7 +10,7 @@ from core.config import settings
 from core.errors import AppError
 from core.models.session import UserSession
 from core.models.user import User
-from core.security import hash_password, hash_token, new_session_token, verify_password
+from core.security import hash_token, new_session_token
 from core.utils import utcnow
 
 
@@ -23,50 +22,89 @@ def get_user_by_email(db: Session, email: str) -> User | None:
     return db.execute(select(User).where(User.email == normalize_email(email))).scalar_one_or_none()
 
 
-def signup(
+def find_zitadel_user(db: Session, *, issuer: str, subject: str) -> User | None:
+    return db.execute(
+        select(User).where(
+            User.idp_issuer == issuer,
+            User.zitadel_sub == subject,
+        )
+    ).scalar_one_or_none()
+
+
+def find_or_create_zitadel_user(
     db: Session,
     *,
+    issuer: str,
+    subject: str,
     email: str,
-    password: str,
     name: str | None,
-    invite_code: str | None,
-) -> tuple[User, str]:
-    if not settings.signup_enabled:
-        raise AppError(403, "Signup is currently closed.")
+) -> User:
+    """JIT-provision the local projection of a Zitadel identity.
 
-    if settings.signup_requires_code:
-        expected = settings.signup_invite_code.strip()
-        provided = (invite_code or "").strip()
-        if not hmac.compare_digest(provided, expected):
-            raise AppError(403, "The invite code is not valid.")
+    Existing local users are adopted by email so their conversion jobs survive
+    the switch from password auth to Zitadel.
+    """
+    issuer = issuer.strip().rstrip("/")
+    subject = subject.strip()
+    email = normalize_email(email)
+    clean_name = (name or "").strip()[:120] or None
 
-    normalized = normalize_email(email)
-    if get_user_by_email(db, normalized) is not None:
-        raise AppError(409, "An account with that email already exists.")
+    if not issuer or not subject:
+        raise AppError(403, "The identity provider returned an incomplete identity.")
+    if not email:
+        raise AppError(403, "Your Zitadel account has no email address.")
+
+    user = find_zitadel_user(db, issuer=issuer, subject=subject)
+    if user is not None:
+        changed = False
+        if user.email != email:
+            user.email = email
+            changed = True
+        if clean_name and user.name != clean_name:
+            user.name = clean_name
+            changed = True
+        if changed:
+            try:
+                db.commit()
+            except IntegrityError as exc:
+                db.rollback()
+                raise AppError(
+                    409,
+                    "That email is already linked to another account.",
+                ) from exc
+        return user
+
+    existing = get_user_by_email(db, email)
+    if existing is not None:
+        if existing.zitadel_sub is not None:
+            raise AppError(409, "That email is already linked to another Zitadel identity.")
+        existing.idp_issuer = issuer
+        existing.zitadel_sub = subject
+        if clean_name:
+            existing.name = clean_name
+        try:
+            db.commit()
+        except IntegrityError as exc:
+            db.rollback()
+            raise AppError(409, "That email is already linked to another account.") from exc
+        db.refresh(existing)
+        return existing
 
     user = User(
-        email=normalized,
-        name=name,
-        password_hash=hash_password(password),
+        email=email,
+        name=clean_name,
+        password_hash=None,
+        idp_issuer=issuer,
+        zitadel_sub=subject,
     )
     try:
         db.add(user)
-        db.flush()
-        raw_token = create_session(db, user)
         db.commit()
     except IntegrityError as exc:
         db.rollback()
-        raise AppError(409, "An account with that email already exists.") from exc
-    return user, raw_token
-
-
-def login(db: Session, *, email: str, password: str) -> tuple[User, str]:
-    user = get_user_by_email(db, email)
-    if user is None or not verify_password(password, user.password_hash):
-        raise AppError(401, "Email or password is incorrect.")
-    raw_token = create_session(db, user)
-    db.commit()
-    return user, raw_token
+        raise AppError(409, "That email is already linked to another account.") from exc
+    db.refresh(user)
+    return user
 
 
 def create_session(db: Session, user: User) -> str:

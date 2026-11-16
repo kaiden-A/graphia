@@ -14,9 +14,8 @@ export interface User {
   createdAt: number | null;
 }
 
-export interface AuthConfig {
-  signupEnabled: boolean;
-  signupRequiresCode: boolean;
+export interface LogoutResponse {
+  logoutUrl: string | null;
 }
 
 export interface Operation {

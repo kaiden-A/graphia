@@ -2,6 +2,8 @@
 
 import { useRef, useState } from "react";
 
+import { ScrollIcon } from "@/components/scrapbook/icons";
+
 interface Props {
   accept: string;
   disabled?: boolean;
@@ -57,17 +59,11 @@ export default function UploadDropzone({ accept, disabled, onFile }: Props) {
           event.target.value = "";
         }}
       />
-      <span className="dropzone-icon" aria-hidden="true">
-        <svg viewBox="0 0 32 32" fill="none">
-          <path d="M8 4h10l6 6v18H8V4Z" stroke="currentColor" strokeWidth="1.5" />
-          <path d="M18 4v6h6" stroke="currentColor" strokeWidth="1.5" />
-          <path d="M16 14v8m0-8-3 3m3-3 3 3" stroke="currentColor" strokeWidth="1.5" />
-        </svg>
-      </span>
+      <ScrollIcon className="dropzone-icon" />
       <span className="dropzone-title">
-        {dragging ? "Drop it here" : "Drop a document here"}
+        {dragging ? "Set it down here" : "Drop a document here"}
       </span>
-      <span className="dropzone-sub">or click to browse · 25 MB maximum</span>
+      <span className="dropzone-sub">or choose a file · 25 MB maximum</span>
     </div>
   );
 }

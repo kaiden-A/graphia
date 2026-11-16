@@ -1,28 +1,48 @@
 "use client";
 
+import {
+  BoatIcon,
+  CompassIcon,
+  LaurelIcon,
+  StormIcon,
+} from "@/components/scrapbook/icons";
+import {
+  RouteMap,
+  TapeStrip,
+  WaxSeal,
+  type SealStatus,
+} from "@/components/scrapbook/Ornaments";
 import { formatBytes, formatDate } from "@/lib/files";
 import type { Conversion } from "@/lib/types";
 
 const STATUS_COPY = {
   PENDING: {
     label: "Queued",
-    note: "The processor will pick this up shortly.",
-    stamp: "queued",
+    stamp: "QUEUED",
+    note: "The expedition is waiting at the dock. The processor will claim it shortly.",
+    seal: "queued" as SealStatus,
+    stage: 0 as const,
   },
   PROCESSING: {
-    label: "Processing",
-    note: "The conversion is running. This page updates automatically.",
-    stamp: "processing",
+    label: "Underway",
+    stamp: "UNDERWAY",
+    note: "The method is running. The route updates automatically.",
+    seal: "processing" as SealStatus,
+    stage: 1 as const,
   },
   COMPLETED: {
     label: "Complete",
-    note: "Your converted file is ready to download.",
-    stamp: "complete",
+    stamp: "COMPLETE",
+    note: "The result has arrived. The download ticket is ready below.",
+    seal: "complete" as SealStatus,
+    stage: 2 as const,
   },
   FAILED: {
     label: "Failed",
-    note: "The conversion did not finish.",
-    stamp: "failed",
+    stamp: "STORM",
+    note: "The passage did not finish. The note below says what happened.",
+    seal: "failed" as SealStatus,
+    stage: 1 as const,
   },
 } as const;
 
@@ -31,43 +51,40 @@ export default function JobTicket({ job }: { job: Conversion }) {
   const copy = isExpired
     ? {
         label: "Expired",
-        note: "The stored file has passed its expiry time.",
-        stamp: "failed" as const,
+        stamp: "EXPIRED",
+        note: "The stored file has passed its rest time. Start a new expedition.",
+        seal: "expired" as SealStatus,
+        stage: 2 as const,
       }
     : STATUS_COPY[job.status];
-  const steps = [
-    { key: "queued", label: "Queued", done: true },
-    {
-      key: "processing",
-      label: "Processing",
-      done: job.status === "PROCESSING" || job.status === "COMPLETED",
-      active: job.status === "PROCESSING",
-    },
-    {
-      key: "ready",
-      label: "Ready",
-      done: job.status === "COMPLETED",
-      active: job.status === "COMPLETED",
-    },
-  ];
+
+  const StatusIcon =
+    copy.seal === "complete"
+      ? LaurelIcon
+      : copy.seal === "failed"
+        ? StormIcon
+        : copy.seal === "processing"
+          ? CompassIcon
+          : BoatIcon;
 
   return (
     <article className="ticket card">
+      <TapeStrip className="ticket-tape" rotate={4} />
       <div className="ticket-top">
         <div>
-          <p className="eyebrow">Job ticket</p>
-          <h1 className="ticket-title">{job.originalFilename}</h1>
-          <p className="ticket-sub">
-            {job.operationLabel} <span className="muted">·</span>{" "}
-            <span className="mono">{job.id.slice(0, 8)}</span>
-          </p>
+          <p className="eyebrow">Expedition ticket</p>
+          <p className="folio-number">No. {job.id.slice(0, 8).toUpperCase()}</p>
         </div>
-        <span className={`stamp stamp-${copy.stamp}`} aria-label={`Status: ${copy.label}`}>
-          {copy.label}
-        </span>
+        <WaxSeal key={job.status} status={copy.seal} label={copy.stamp} />
       </div>
 
-      <div className="ticket-rule" />
+      <h1 className="ticket-title">{job.originalFilename}</h1>
+      <p className="ticket-sub">
+        {job.operationLabel} <span className="muted">·</span>{" "}
+        <span className="mono">{job.id.slice(0, 4)}</span>
+      </p>
+
+      <div className="ticket-perf" />
 
       <div className="ticket-meta">
         <div>
@@ -75,44 +92,28 @@ export default function JobTicket({ job }: { job: Conversion }) {
           <span className="meta-value">{formatBytes(job.fileSize)}</span>
         </div>
         <div>
-          <span className="meta-label">Output</span>
-          <span className="meta-value">
-            {job.outputFilename ? `${job.outputFilename}` : `—`}
-          </span>
+          <span className="meta-label">Result</span>
+          <span className="meta-value">{job.outputFilename ?? "—"}</span>
         </div>
         <div>
-          <span className="meta-label">Started</span>
+          <span className="meta-label">Departed</span>
           <span className="meta-value">{formatDate(job.startedAt)}</span>
         </div>
         <div>
-          <span className="meta-label">Ready</span>
+          <span className="meta-label">Arrived</span>
           <span className="meta-value">{formatDate(job.completedAt)}</span>
         </div>
       </div>
 
-      <div className="ticket-status" aria-live="polite">
-        <div className={`status-orb status-orb-${copy.stamp}`} aria-hidden="true" />
+      <RouteMap stage={copy.stage} compact />
+
+      <div className={`ticket-status ticket-status--${copy.seal}`} aria-live="polite">
+        <StatusIcon className="status-icon" />
         <div>
           <strong>{copy.label}</strong>
           <p className="muted small">{copy.note}</p>
         </div>
       </div>
-
-      {job.status !== "FAILED" ? (
-        <ol className="timeline" aria-label="Conversion progress">
-          {steps.map((step) => (
-            <li
-              key={step.key}
-              className="timeline-step"
-              data-done={step.done || undefined}
-              data-active={step.active || undefined}
-            >
-              <span className="timeline-dot" aria-hidden="true" />
-              <span>{step.label}</span>
-            </li>
-          ))}
-        </ol>
-      ) : null}
 
       {job.status === "FAILED" && job.errorMessage ? (
         <div className="error-banner" role="alert">
@@ -120,9 +121,11 @@ export default function JobTicket({ job }: { job: Conversion }) {
         </div>
       ) : null}
 
-      <div className="ticket-footer mono">
-        <span>Expires {formatDate(job.expiresAt)}</span>
-        <span>{job.attempts > 1 ? `${job.attempts} attempts` : "Single pass"}</span>
+      <div className="ticket-footer">
+        <span className="mono">Expires {formatDate(job.expiresAt)}</span>
+        <span className="mono">
+          {job.attempts > 1 ? `${job.attempts} attempts` : "Single passage"}
+        </span>
       </div>
     </article>
   );

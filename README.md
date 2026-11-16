@@ -22,11 +22,14 @@ A small, asynchronous document converter.
    `client/.env.example` → `client/.env.local` if they do not exist. It also
    patches the Windows venv so Application Control does not block its launcher.
 
-3. Fill in `server/.env` with the Neon URL, R2 credentials, and an `APP_SECRET`.
-   Replace `SIGNUP_INVITE_CODE` with a code you choose. For DOCX→PDF and
-   Markdown→PDF locally, install LibreOffice and put `soffice` on `PATH` (or set
-   `SOFFICE_BIN`); otherwise use the processor Docker image. Configure R2 bucket
-   CORS for `PUT` from the client origin; see `docs/storage.md`.
+3. Fill in `server/.env` with the Neon URL, R2 credentials, `APP_SECRET`, and
+   the Zitadel OIDC values. The file is annotated with `[shared]`, `[api]`, and
+   `[processor]` scopes; `docs/environment.md` has the full table and production
+   split, and `docs/auth.md` covers the Zitadel application setup. Keep the
+   Zitadel redirect URI in sync with the client port. For DOCX→PDF
+   and Markdown→PDF locally, install LibreOffice and put `soffice` on `PATH` (or
+   set `SOFFICE_BIN`); otherwise use the processor Docker image. Configure R2
+   bucket CORS for `PUT` from the client origin; see `docs/storage.md`.
 4. Run all three services:
 
    ```powershell
@@ -37,7 +40,10 @@ A small, asynchronous document converter.
    - API: <http://localhost:8000>
    - Processor: <http://localhost:8001>
 
-   If port 3000 is already in use, Next chooses the next free port.
+   If port 3000 is already in use, Next chooses the next free port. Zitadel
+   redirect URIs must match that port exactly, so either free 3000 or register
+   the alternate port and update `ZITADEL_REDIRECT_URI` /
+   `ZITADEL_POST_LOGOUT_URI`.
 
 5. Run the database migration:
 
@@ -45,7 +51,8 @@ A small, asynchronous document converter.
    uv run --directory server python -m alembic upgrade head
    ```
 
-6. Sign up at `/signup` with the invite code from `server/.env`.
+6. Sign in at `/login` through Zitadel. `/signup` opens the Zitadel
+   registration flow with `prompt=create`.
 
 ## Tests
 
@@ -74,7 +81,7 @@ uv run --directory server python -m scripts.cleanup_expired
 # Requeue jobs left PROCESSING by a crashed processor
 uv run --directory server python -m scripts.requeue_stale --minutes 15
 
-# Create a user without signup
+# Create a placeholder user; the first Zitadel login adopts it by email
 uv run --directory server python -m scripts.create_user you@example.com
 ```
 
@@ -99,6 +106,8 @@ are the runtime contract.
 
 ## Docs
 
+- `docs/environment.md` — every env var, its scope, and the API/processor split.
+- `docs/auth.md` — Zitadel setup, OIDC flow, provisioning, and troubleshooting.
 - `docs/architecture.md` — request flow, status transitions, failure recovery.
 - `docs/storage.md` — R2 keys, CORS, presigned URLs, lifecycle rules.
 - `docs/conversions.md` — operation matrix, limits, adding a converter.

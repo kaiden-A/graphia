@@ -21,8 +21,11 @@ class Settings(BaseSettings):
     session_ttl_days: int = 30
     cookie_secure: bool = False
 
-    signup_enabled: bool = True
-    signup_invite_code: str = ""
+    public_base_url: str = "http://localhost:3000"
+    zitadel_issuer: str = ""
+    zitadel_client_id: str = ""
+    zitadel_redirect_uri: str = "http://localhost:3000/api/auth/callback"
+    zitadel_post_logout_uri: str = "http://localhost:3000/login"
 
     r2_account_id: str = ""
     r2_endpoint: str = ""
@@ -59,8 +62,12 @@ class Settings(BaseSettings):
         return self.session_ttl_days * 24 * 60 * 60
 
     @property
-    def signup_requires_code(self) -> bool:
-        return bool(self.signup_invite_code.strip())
+    def zitadel_issuer_url(self) -> str:
+        return self.zitadel_issuer.strip().rstrip("/")
+
+    @property
+    def zitadel_configured(self) -> bool:
+        return bool(self.zitadel_issuer_url and self.zitadel_client_id.strip())
 
     @property
     def sqlalchemy_url(self) -> str:

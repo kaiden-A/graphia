@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from core.models.enums import ConversionOperation, JobStatus
-from tests.conftest import create_user, login, make_job, signup
+from tests.conftest import create_user, login_as, make_job, signup
 
 
 def _metadata(**overrides):
@@ -28,9 +28,9 @@ def test_operations_endpoint(api_client):
     }
 
 
-def test_create_conversion_returns_presigned_upload(api_client, fake_storage, monkeypatch):
+def test_create_conversion_returns_presigned_upload(api_client, db, fake_storage, monkeypatch):
     monkeypatch.setattr("app.routers.conversions_router.get_storage", lambda: fake_storage)
-    signup(api_client)
+    signup(api_client, db)
 
     response = api_client.post("/api/conversions", json=_metadata())
     assert response.status_code == 201, response.text
@@ -41,9 +41,9 @@ def test_create_conversion_returns_presigned_upload(api_client, fake_storage, mo
     assert data["upload"]["headers"]["Content-Type"] == "text/plain"
 
 
-def test_create_markdown_accepts_text_plain(api_client, fake_storage, monkeypatch):
+def test_create_markdown_accepts_text_plain(api_client, db, fake_storage, monkeypatch):
     monkeypatch.setattr("app.routers.conversions_router.get_storage", lambda: fake_storage)
-    signup(api_client)
+    signup(api_client, db)
     response = api_client.post(
         "/api/conversions",
         json=_metadata(
@@ -56,9 +56,9 @@ def test_create_markdown_accepts_text_plain(api_client, fake_storage, monkeypatc
     assert response.json()["upload"]["headers"]["Content-Type"] == "text/markdown"
 
 
-def test_create_rejects_wrong_extension(api_client, fake_storage, monkeypatch):
+def test_create_rejects_wrong_extension(api_client, db, fake_storage, monkeypatch):
     monkeypatch.setattr("app.routers.conversions_router.get_storage", lambda: fake_storage)
-    signup(api_client)
+    signup(api_client, db)
     response = api_client.post(
         "/api/conversions",
         json=_metadata(operation="docx_to_pdf", originalFilename="notes.txt"),
@@ -66,9 +66,9 @@ def test_create_rejects_wrong_extension(api_client, fake_storage, monkeypatch):
     assert response.status_code == 415
 
 
-def test_create_rejects_oversize(api_client, fake_storage, monkeypatch):
+def test_create_rejects_oversize(api_client, db, fake_storage, monkeypatch):
     monkeypatch.setattr("app.routers.conversions_router.get_storage", lambda: fake_storage)
-    signup(api_client)
+    signup(api_client, db)
     response = api_client.post(
         "/api/conversions",
         json=_metadata(fileSize=26 * 1024 * 1024),
@@ -85,7 +85,7 @@ def test_complete_upload_triggers_processor(api_client, db, fake_storage, monkey
         return True, None
 
     monkeypatch.setattr("app.services.processor_client.trigger", fake_trigger)
-    signup(api_client)
+    signup(api_client, db)
 
     created = api_client.post("/api/conversions", json=_metadata()).json()
     job_id = created["job"]["id"]
@@ -104,7 +104,7 @@ def test_trigger_failure_marks_job_failed(api_client, db, fake_storage, monkeypa
         "app.services.processor_client.trigger",
         lambda _job_id: (False, "The conversion service is unavailable. Please try again."),
     )
-    signup(api_client)
+    signup(api_client, db)
 
     created = api_client.post("/api/conversions", json=_metadata()).json()
     job_id = created["job"]["id"]
@@ -125,7 +125,7 @@ def test_ownership_is_enforced(api_client, db, fake_storage, monkeypatch):
     job = make_job(db, owner=owner, upload_completed=True)
     fake_storage.seed(job.input_key, b"Hello\n", "text/plain")
 
-    login(api_client, other.email, "correct-horse")
+    login_as(api_client, db, other)
     response = api_client.get(f"/api/conversions/{job.id}")
     assert response.status_code == 404
 
@@ -140,7 +140,7 @@ def test_download_returns_signed_url(api_client, db, fake_storage, monkeypatch):
         status=JobStatus.COMPLETED,
         with_output=True,
     )
-    login(api_client, user.email, "correct-horse")
+    login_as(api_client, db, user)
 
     response = api_client.get(f"/api/conversions/{job.id}/download")
     assert response.status_code == 200
@@ -158,7 +158,7 @@ def test_download_expired_job_is_gone(api_client, db, fake_storage, monkeypatch)
         with_output=True,
         expires_in_hours=-1,
     )
-    login(api_client, user.email, "correct-horse")
+    login_as(api_client, db, user)
 
     response = api_client.get(f"/api/conversions/{job.id}/download")
     assert response.status_code == 410
@@ -169,7 +169,7 @@ def test_delete_removes_job_and_objects(api_client, db, fake_storage, monkeypatc
     user = create_user(db)
     job = make_job(db, owner=user, operation=ConversionOperation.TXT_TO_MARKDOWN)
     fake_storage.seed(job.input_key, b"hello", "text/plain")
-    login(api_client, user.email, "correct-horse")
+    login_as(api_client, db, user)
 
     response = api_client.delete(f"/api/conversions/{job.id}")
     assert response.status_code == 204
@@ -183,7 +183,7 @@ def test_delete_processing_job_is_conflict(api_client, db, fake_storage, monkeyp
     monkeypatch.setattr("app.routers.conversions_router.get_storage", lambda: fake_storage)
     user = create_user(db)
     job = make_job(db, owner=user, status=JobStatus.PROCESSING)
-    login(api_client, user.email, "correct-horse")
+    login_as(api_client, db, user)
 
     response = api_client.delete(f"/api/conversions/{job.id}")
     assert response.status_code == 409
@@ -191,7 +191,7 @@ def test_delete_processing_job_is_conflict(api_client, db, fake_storage, monkeyp
 
 def test_active_job_limit(api_client, db, fake_storage, monkeypatch):
     monkeypatch.setattr("app.routers.conversions_router.get_storage", lambda: fake_storage)
-    signup(api_client)
+    signup(api_client, db)
     for _ in range(3):
         response = api_client.post("/api/conversions", json=_metadata())
         assert response.status_code == 201

@@ -6,10 +6,13 @@ os.environ["APP_ENV"] = "test"
 os.environ["APP_SECRET"] = "test-secret"
 os.environ["DB_SCHEMA"] = "public"
 os.environ["INTERNAL_TOKEN"] = "test-internal-token"
-os.environ["SIGNUP_INVITE_CODE"] = "test-invite"
-os.environ["SIGNUP_ENABLED"] = "true"
 os.environ["COOKIE_SECURE"] = "false"
 os.environ["PROCESSOR_URL"] = "http://processor.test"
+os.environ["PUBLIC_BASE_URL"] = "http://testserver"
+os.environ["ZITADEL_ISSUER"] = "https://zitadel.test"
+os.environ["ZITADEL_CLIENT_ID"] = "test-client"
+os.environ["ZITADEL_REDIRECT_URI"] = "http://testserver/api/auth/callback"
+os.environ["ZITADEL_POST_LOGOUT_URI"] = "http://testserver/login"
 os.environ["DISABLE_SQLALCHEMY_CEXT"] = "1"
 if os.getenv("RUN_INTEGRATION") != "1":
     os.environ["DATABASE_URL"] = "sqlite://"
@@ -25,16 +28,68 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.dependencies import get_zitadel
 from app.main import app as api_app
-from app.services.rate_limit import login_limiter, signup_limiter, upload_limiter
+from app.services.rate_limit import login_limiter, upload_limiter
+from core.config import settings
 from core.database import get_db
 from core.models import Base
 from core.models.conversion_job import ConversionJob
 from core.models.enums import ConversionOperation, JobStatus
+from core.models.session import UserSession
 from core.models.user import User
-from core.security import hash_password
+from core.security import new_session_token
 from core.utils import utcnow
 from processor.main import app as processor_app
+
+
+class FakeZitadel:
+    def __init__(self) -> None:
+        self.claims: dict = {
+            "sub": "zitadel-sub-1",
+            "email": "ada@example.com",
+            "email_verified": True,
+            "name": "Ada",
+        }
+        self.state: str | None = None
+        self.nonce: str | None = None
+        self.last_authorize: dict | None = None
+
+    def authorize_url(
+        self,
+        *,
+        state: str,
+        nonce: str,
+        code_challenge: str,
+        redirect_uri: str,
+        login_hint: str | None = None,
+        prompt: str | None = None,
+    ) -> str:
+        self.state = state
+        self.nonce = nonce
+        self.last_authorize = {
+            "state": state,
+            "nonce": nonce,
+            "code_challenge": code_challenge,
+            "redirect_uri": redirect_uri,
+            "login_hint": login_hint,
+            "prompt": prompt,
+        }
+        return f"https://zitadel.test/authorize?state={state}"
+
+    def exchange_code(self, *, code: str, code_verifier: str, redirect_uri: str) -> dict:
+        assert code == "test-code"
+        assert code_verifier
+        assert redirect_uri
+        return {"id_token": "fake-id-token"}
+
+    def verify_id_token(self, id_token: str, *, nonce: str) -> dict:
+        assert id_token == "fake-id-token"
+        assert nonce == self.nonce
+        return dict(self.claims)
+
+    def end_session_url(self, *, post_logout_redirect_uri: str | None = None) -> str:
+        return f"https://zitadel.test/logout?post_logout_redirect_uri={post_logout_redirect_uri}"
 
 
 class FakeStorage:
@@ -79,12 +134,14 @@ class FakeStorage:
 
 @dataclass
 class TestDatabase:
+    __test__ = False
+
     engine: object
     session_factory: sessionmaker
 
 
 @pytest.fixture()
-def db(tmp_path) -> TestDatabase:
+def db() -> TestDatabase:
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},
@@ -107,7 +164,6 @@ def db(tmp_path) -> TestDatabase:
 @pytest.fixture(autouse=True)
 def reset_limiters():
     login_limiter.reset()
-    signup_limiter.reset()
     upload_limiter.reset()
     yield
 
@@ -118,7 +174,12 @@ def fake_storage() -> FakeStorage:
 
 
 @pytest.fixture()
-def api_client(db: TestDatabase):
+def fake_zitadel() -> FakeZitadel:
+    return FakeZitadel()
+
+
+@pytest.fixture()
+def api_client(db: TestDatabase, fake_zitadel: FakeZitadel):
     def override_get_db():
         session = db.session_factory()
         try:
@@ -127,6 +188,7 @@ def api_client(db: TestDatabase):
             session.close()
 
     api_app.dependency_overrides[get_db] = override_get_db
+    api_app.dependency_overrides[get_zitadel] = lambda: fake_zitadel
     with TestClient(api_app, base_url="http://testserver") as client:
         yield client
     api_app.dependency_overrides.clear()
@@ -151,12 +213,11 @@ def create_user(
     db: TestDatabase,
     *,
     email: str = "ada@example.com",
-    password: str = "correct-horse",
     name: str = "Ada",
 ) -> User:
     session = db.session_factory()
     try:
-        user = User(email=email, name=name, password_hash=hash_password(password))
+        user = User(email=email, name=name, password_hash=None)
         session.add(user)
         session.commit()
         session.refresh(user)
@@ -165,28 +226,56 @@ def create_user(
         session.close()
 
 
-def login(client: TestClient, email: str, password: str) -> None:
-    response = client.post("/api/auth/login", json={"email": email, "password": password})
-    assert response.status_code == 200, response.text
+def create_session_for_user(db: TestDatabase, user: User) -> str:
+    session = db.session_factory()
+    try:
+        raw_token, token_hash = new_session_token()
+        now = utcnow()
+        session.add(
+            UserSession(
+                user_id=user.id,
+                token_hash=token_hash,
+                created_at=now,
+                last_seen_at=now,
+                expires_at=now + timedelta(days=settings.session_ttl_days),
+            )
+        )
+        session.commit()
+        return raw_token
+    finally:
+        session.close()
+
+
+def set_session_cookie(client: TestClient, raw_token: str) -> None:
+    # A raw header is deterministic in TestClient; the cookie jar's domain
+    # matching varies with the base URL host.
+    client.headers["Cookie"] = f"{settings.session_cookie_name}={raw_token}"
+
+
+def authenticate(
+    client: TestClient,
+    db: TestDatabase,
+    *,
+    email: str = "ada@example.com",
+    name: str = "Ada",
+) -> User:
+    user = create_user(db, email=email, name=name)
+    set_session_cookie(client, create_session_for_user(db, user))
+    return user
 
 
 def signup(
     client: TestClient,
+    db: TestDatabase,
     *,
     email: str = "ada@example.com",
-    password: str = "correct-horse",
     name: str = "Ada",
-) -> None:
-    response = client.post(
-        "/api/auth/signup",
-        json={
-            "email": email,
-            "password": password,
-            "name": name,
-            "inviteCode": "test-invite",
-        },
-    )
-    assert response.status_code == 201, response.text
+) -> User:
+    return authenticate(client, db, email=email, name=name)
+
+
+def login_as(client: TestClient, db: TestDatabase, user: User) -> None:
+    set_session_cookie(client, create_session_for_user(db, user))
 
 
 def make_job(

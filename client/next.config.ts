@@ -7,6 +7,7 @@ const apiOrigin = (process.env.API_ORIGIN ?? "http://localhost:8000").replace(/\
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
+  devIndicators: false,
   turbopack: {
     root: rootDir,
   },

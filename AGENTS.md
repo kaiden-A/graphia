@@ -11,11 +11,17 @@
 - `uv run --directory server python -m scripts.cleanup_expired` — delete expired files.
 - `uv run --directory server python -m scripts.requeue_stale` — recover stale jobs.
 
+Environment scope reference: `docs/environment.md`. Local `server/.env` contains
+shared, API-only, and processor-only values for convenience; production must give
+each service only its own scope.
+
 ## Architecture invariants
 
 - Service A (`server/app`) is public. Service B (`server/processor`) is internal.
-- Auth is email/password with server-side sessions; only the sha256 session token
-  hash is stored. Every job read/write is scoped by `owner_id`; not-owned is 404.
+- Auth is Zitadel OIDC Authorization Code + PKCE (public client, no secret).
+  Session tokens are random; only their sha256 hash is stored. The OAuth
+  handshake cookie is signed with `APP_SECRET`. Every job read/write is scoped by
+  `owner_id`; not-owned is 404. See `docs/auth.md` and `docs/environment.md`.
 - A and B never import each other. They share only `server/core` and communicate
   through HTTP, PostgreSQL, and R2.
 - `server/converters` contains pure conversion code. It must not import FastAPI,

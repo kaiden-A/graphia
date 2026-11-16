@@ -31,7 +31,7 @@ def test_full_txt_conversion_lifecycle(
     monkeypatch.setattr("processor.router.run_job", runner)
     monkeypatch.setattr("app.services.processor_client.trigger", trigger)
 
-    signup(api_client)
+    signup(api_client, db)
     created = api_client.post(
         "/api/conversions",
         json={

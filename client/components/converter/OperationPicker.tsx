@@ -1,6 +1,21 @@
 "use client";
 
+import {
+  AmphoraIcon,
+  QuillIcon,
+  ScrollIcon,
+  TabletIcon,
+  TempleIcon,
+} from "@/components/scrapbook/icons";
 import type { Operation, OperationId } from "@/lib/types";
+
+const GLYPHS = {
+  docx_to_pdf: ScrollIcon,
+  pdf_to_markdown: TabletIcon,
+  txt_to_markdown: QuillIcon,
+  markdown_to_pdf: TempleIcon,
+  images_to_pdf: AmphoraIcon,
+} as const;
 
 interface Props {
   operations: Operation[];
@@ -15,6 +30,7 @@ export default function OperationPicker({ operations, value, extension, onChange
       {operations.map((operation) => {
         const compatible = !extension || operation.inputExtensions.includes(extension);
         const selected = value === operation.id;
+        const Glyph = GLYPHS[operation.id];
         return (
           <button
             key={operation.id}
@@ -28,7 +44,10 @@ export default function OperationPicker({ operations, value, extension, onChange
             onClick={() => onChange(operation.id)}
             title={compatible ? operation.description : `Not available for .${extension}`}
           >
-            <span className="operation-name">{operation.label}</span>
+            <span className="operation-top">
+              <Glyph className="operation-icon" />
+              <span className="operation-name">{operation.label}</span>
+            </span>
             <span className="operation-meta">
               {operation.inputExtensions.map((item) => `.${item}`).join(" · ")}
               <span className="operation-arrow" aria-hidden="true">

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import OperationPicker from "@/components/converter/OperationPicker";
 import SelectedFile from "@/components/converter/SelectedFile";
 import UploadDropzone from "@/components/converter/UploadDropzone";
+import { ScrollIcon } from "@/components/scrapbook/icons";
 import { ApiError, apiJson, messageForError } from "@/lib/api-client";
 import {
   MAX_UPLOAD_BYTES,
@@ -167,15 +168,15 @@ export default function UploadPanel() {
   }
 
   return (
-    <section className="card upload-card" aria-labelledby="upload-title">
-      <div className="card-head">
+    <section className="dispatch-card card" aria-labelledby="upload-title">
+      <div className="dispatch-head">
         <div>
-          <p className="eyebrow">New conversion</p>
+          <p className="eyebrow">Dispatch</p>
           <h2 id="upload-title" className="card-title">
-            Put a document in.
+            What are we sending?
           </h2>
         </div>
-        <span className="card-index mono">01</span>
+        <ScrollIcon className="card-glyph" />
       </div>
 
       <UploadDropzone accept={accept} disabled={busy} onFile={chooseFile} />
@@ -199,7 +200,7 @@ export default function UploadPanel() {
       ) : null}
 
       <div className="section-label">
-        <span>Choose the operation</span>
+        <span>Choose the method</span>
         {extension ? <span className="mono muted">.{extension}</span> : null}
       </div>
 
@@ -233,15 +234,15 @@ export default function UploadPanel() {
           disabled={!file || !operation || busy || operations.length === 0}
         >
           {phase === "creating"
-            ? "Creating job…"
+            ? "Preparing the ticket…"
             : phase === "uploading"
-              ? `Uploading ${progress}%…`
+              ? `Lifting the file ${progress}%…`
               : phase === "confirming"
-                ? "Starting conversion…"
-                : "Convert document"}
+                ? "Calling the processor…"
+                : "Start conversion"}
         </button>
         <p className="fine-print">
-          The file uploads straight to private object storage. Max 25 MB.
+          25 MB maximum · one document · files rest for 24 hours
         </p>
       </div>
     </section>

@@ -21,7 +21,8 @@ Browser ──PUT/GET────────►  R2  ◄──── Service B 
 
 ## Service A — public API
 
-- Owns auth (server-side sessions), job records, and R2 signing.
+- Owns auth (Zitadel OIDC + server-side sessions), job records, and R2 signing.
+  The login flow is documented in `docs/auth.md`.
 - Validates upload metadata and the first bytes of the uploaded object.
 - Never receives the file body. The browser gets a presigned PUT URL and sends
   the bytes directly to R2.

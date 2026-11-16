@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import timedelta
 
+import httpx
 from fastapi import Depends, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
+from app.services.zitadel import ZitadelClient
 from core.config import settings
 from core.database import get_db
 from core.errors import AppError
@@ -59,3 +62,13 @@ def require_auth(
 
 def require_user(auth: AuthContext = Depends(require_auth)) -> User:
     return auth.user
+
+
+def get_zitadel() -> Iterator[ZitadelClient]:
+    with httpx.Client(timeout=10.0) as http:
+        yield ZitadelClient(
+            issuer=settings.zitadel_issuer_url,
+            client_id=settings.zitadel_client_id,
+            http=http,
+        )
+

@@ -2,6 +2,9 @@
 
 ## Two Cloud Run services
 
+The variable-by-variable split is in `docs/environment.md`. Give each service
+only its own scope; do not copy the whole local `server/.env` to both.
+
 Build two images from the same `server/` context:
 
 ```powershell
@@ -20,6 +23,36 @@ only that shared token. For stronger isolation, add a Google service-account ID
 token in `processor_client.py` and deploy the processor with
 `--no-allow-unauthenticated`; otherwise leave the processor public but
 token-protected.
+
+## Zitadel
+
+Create one Zitadel Web application with Authorization Code + PKCE and no client
+secret. Register the **client** URLs exactly:
+
+```text
+https://<client-domain>/api/auth/callback
+https://<client-domain>/login
+```
+
+Register both localhost and production URLs; do not point them at the Cloud Run
+API URL. Set on the API:
+
+```text
+ZITADEL_ISSUER
+ZITADEL_CLIENT_ID
+ZITADEL_REDIRECT_URI
+ZITADEL_POST_LOGOUT_URI
+PUBLIC_BASE_URL
+APP_SECRET
+```
+
+`APP_SECRET` signs the short-lived OAuth handshake cookie; keep it stable across
+API revisions and instances. There is no `ZITADEL_CLIENT_SECRET`.
+
+Vercel/Firebase preview deployments have different origins. Either use a stable
+auth domain, register each preview origin, or accept that previews cannot
+complete sign-in. Likewise, if Next runs on `localhost:3001`, register 3001 or
+free 3000 and use 3000 consistently.
 
 ## Processor CPU
 
@@ -62,7 +95,8 @@ API_ORIGIN=https://graphia-api-<hash>.run.app
 SESSION_COOKIE_NAME=graphia_session
 ```
 
-Set `COOKIE_SECURE=true` on the API in production.
+Set `COOKIE_SECURE=true` on the API in production. The Zitadel redirect and
+post-logout URIs must use the public client origin, not `API_ORIGIN`.
 
 If the client is on **Firebase Hosting** and `/api` is proxied through a
 Firebase rewrite, Firebase strips every cookie except `__session`. In that case

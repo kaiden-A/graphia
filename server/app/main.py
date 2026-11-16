@@ -22,6 +22,8 @@ async def lifespan(_: FastAPI):
         logger.warning("APP_SECRET is still the development default.")
     if settings.is_production and settings.internal_token == "dev-internal-token-change-me":
         logger.warning("INTERNAL_TOKEN is still the development default.")
+    if not settings.zitadel_configured:
+        logger.warning("Zitadel is not configured; sign-in will be unavailable.")
     yield
 
 

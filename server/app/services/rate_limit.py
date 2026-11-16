@@ -34,5 +34,4 @@ class SlidingWindowLimiter:
 
 
 login_limiter = SlidingWindowLimiter()
-signup_limiter = SlidingWindowLimiter()
 upload_limiter = SlidingWindowLimiter()

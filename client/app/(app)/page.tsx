@@ -1,79 +1,94 @@
 import UploadPanel from "@/components/converter/UploadPanel";
+import { CompassIcon, LaurelIcon, ScrollIcon } from "@/components/scrapbook/icons";
+import { PaperNote, RouteMap, TapeStrip } from "@/components/scrapbook/Ornaments";
 
 export default function HomePage() {
   return (
     <div className="home">
-      <section className="hero">
-        <div className="hero-copy">
-          <p className="eyebrow">Document desk · Est. 2026</p>
+      <section className="journal-spread">
+        <div className="journal-page journal-page--left">
+          <div className="folio-line">
+            <span className="ink-stamp">Field notes</span>
+            <span className="folio-number">Expedition No. 07</span>
+          </div>
+
           <h1 className="display">
-            Convert the thing.
+            Send a document
             <br />
-            <em>Keep the thread.</em>
+            <em>on a journey.</em>
           </h1>
           <p className="lede">
-            Drop in a Word document, a PDF, a text file, Markdown, or an image. Pick the
-            operation, leave the desk, and come back to a finished file. The processor works
-            in the background.
+            It leaves as a Word file, a PDF, a page of text, or an image. It comes back
+            transformed. You keep the ticket, follow the route, and collect the result.
           </p>
+
+          <div className="route-wrap">
+            <RouteMap stage={0} />
+          </div>
 
           <dl className="stat-row">
             <div>
-              <dt>Max file</dt>
+              <dt>Weight</dt>
               <dd>25 MB</dd>
             </div>
             <div>
-              <dt>Stored for</dt>
+              <dt>Rest</dt>
               <dd>24 hours</dd>
             </div>
             <div>
-              <dt>Processing</dt>
-              <dd>Async</dd>
+              <dt>Method</dt>
+              <dd>α β γ</dd>
             </div>
           </dl>
 
-          <div className="hero-note">
-            <span className="hero-note-mark" aria-hidden="true" />
-            <p>
-              Files go directly from your browser to private object storage. They do not pass
-              through the web server, and download links are temporary.
-            </p>
-          </div>
+          <PaperNote className="hero-note" rotate={-1.2}>
+            The browser sends the file straight to private storage. The API handles the
+            ticket, and the processor does the work.
+          </PaperNote>
         </div>
 
-        <UploadPanel />
+        <div className="journal-page journal-page--right">
+          <TapeStrip className="tape--top-left" rotate={-6} />
+          <TapeStrip className="tape--top-right" rotate={4} />
+          <UploadPanel />
+          <p className="margin-scribble">one document, one method, one ticket</p>
+        </div>
       </section>
 
-      <section className="how" aria-labelledby="how-title">
-        <div className="how-head">
-          <p className="eyebrow">The shape of it</p>
-          <h2 id="how-title" className="how-title">
-            One document, three quiet steps.
+      <section className="method" aria-labelledby="method-title">
+        <div className="method-head">
+          <p className="eyebrow">The method</p>
+          <h2 id="method-title" className="method-title">
+            Three stages, kept together by a ticket.
           </h2>
         </div>
-        <ol className="how-grid">
-          <li>
-            <span className="how-index mono">01</span>
-            <h3>Drop and choose</h3>
+
+        <ol className="method-grid">
+          <li className="method-step">
+            <span className="method-glyph">α</span>
+            <ScrollIcon className="method-icon" />
+            <h3>Dispatch</h3>
             <p>
-              The browser asks the API for a signed upload, then sends the file straight to R2.
-              No giant request through the app server.
+              Choose a file and a method. The API signs a direct upload to R2, so the
+              document never passes through the web server.
             </p>
           </li>
-          <li>
-            <span className="how-index mono">02</span>
-            <h3>Leave the desk</h3>
+          <li className="method-step">
+            <span className="method-glyph">β</span>
+            <CompassIcon className="method-icon" />
+            <h3>Passage</h3>
             <p>
-              The API creates a ticket and hands the job to the processor. The processor claims
-              it atomically and runs the conversion engine.
+              The processor claims the job atomically, runs the right engine, and marks the
+              ticket as it moves. The page can be left open or returned to later.
             </p>
           </li>
-          <li>
-            <span className="how-index mono">03</span>
-            <h3>Take the file</h3>
+          <li className="method-step">
+            <span className="method-glyph">γ</span>
+            <LaurelIcon className="method-icon" />
+            <h3>Homecoming</h3>
             <p>
-              Poll the ticket, download through a short-lived signed URL, and let the files
-              expire when their time is up.
+              The result is stored under a fresh key. A short-lived signed link brings it
+              back, and the objects rest until they expire.
             </p>
           </li>
         </ol>
