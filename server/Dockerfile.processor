@@ -24,7 +24,10 @@ RUN apt-get update \
         libreoffice-writer \
         fonts-liberation \
         fonts-dejavu-core \
-    && rm -rf /var/lib/apt/lists/*
+        fonts-crosextra-carlito \
+        fonts-crosextra-caladea \
+    && rm -rf /var/lib/apt/lists/* \
+    && soffice --version
 
 WORKDIR /app
 

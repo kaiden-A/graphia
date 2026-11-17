@@ -50,11 +50,39 @@ message, never a traceback.
 
 ## Local LibreOffice
 
-The processor image installs LibreOffice Writer. For local development, install
-LibreOffice and make `soffice` available on `PATH`, or set:
+DOCX to PDF and Markdown to PDF run LibreOffice headless. The processor image
+installs it at build time (`libreoffice-writer` plus Liberation, Carlito, and
+Caladea fonts) and fails the build if `soffice --version` does not answer. Local
+development does not use that image, so the engine must be installed once on the
+host.
+
+Windows:
+
+```powershell
+winget install --id TheDocumentFoundation.LibreOffice -e --silent --accept-package-agreements --accept-source-agreements
+```
+
+Then point the processor at the binary in `server/.env`:
 
 ```dotenv
 SOFFICE_BIN=C:/Program Files/LibreOffice/program/soffice.exe
 ```
 
-Unit tests skip DOCX→PDF and Markdown→PDF when `soffice` is unavailable.
+Verify both the binary and the setting:
+
+```powershell
+& "C:\Program Files\LibreOffice\program\soffice.com" --version
+uv run --directory server python -c "from core.config import settings; from converters.libreoffice import soffice_available; print(settings.soffice_bin, soffice_available(settings.soffice_bin))"
+```
+
+Use `soffice.com` for console output. `soffice.exe` is a GUI subsystem launcher
+and prints nothing, but works for conversions.
+
+Restart the processor after changing `.env`; settings are read at startup. The
+processor logs the resolved binary on boot and `GET /` reports
+`{"soffice": true}`. The first conversion is slow because every run gets a fresh
+LibreOffice profile.
+
+Unit tests read `settings.soffice_bin`, so an absolute path is enough. When the
+binary is missing, the DOCX test skips and every PDF producing run fails with
+“LibreOffice is not installed on the conversion server.”

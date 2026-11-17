@@ -8,10 +8,11 @@ from PIL import Image
 
 from converters.base import ConversionContext
 from converters.images_to_pdf import convert as images_to_pdf
-from converters.libreoffice import soffice_available
+from converters.libreoffice import resolve_soffice, soffice_available
 from converters.markdown_to_pdf import render_markdown_html
 from converters.pdf_to_markdown import convert as pdf_to_markdown
 from converters.txt_to_markdown import convert as txt_to_markdown
+from core.config import settings
 
 
 @pytest.fixture()
@@ -20,7 +21,7 @@ def context(tmp_path: Path) -> ConversionContext:
         workdir=tmp_path,
         original_filename="source.txt",
         timeout_seconds=30,
-        soffice_bin="soffice",
+        soffice_bin=settings.soffice_bin,
     )
 
 
@@ -81,7 +82,32 @@ def test_markdown_render_escapes_raw_html_and_drops_images():
     assert "alt text" in rendered
 
 
-@pytest.mark.skipif(not soffice_available("soffice"), reason="LibreOffice is not installed")
+def test_markdown_render_keeps_a_leading_h1():
+    rendered = render_markdown_html("# Own title\n\nBody text.", "report")
+    assert "<h1>Own title</h1>" in rendered
+    assert "<h1>report</h1>" not in rendered
+    assert rendered.count("<h1>") == 1
+
+
+def test_markdown_render_uses_the_filename_without_an_h1():
+    rendered = render_markdown_html("Body text only.", "notes")
+    assert "<h1>notes</h1>" in rendered
+
+
+def test_resolve_soffice_returns_an_existing_file(tmp_path):
+    fake = tmp_path / "soffice.exe"
+    fake.write_text("stub", encoding="utf-8")
+    fake.chmod(0o755)
+    assert resolve_soffice(str(fake)) == fake
+
+
+def test_resolve_soffice_rejects_a_directory(tmp_path):
+    assert resolve_soffice(str(tmp_path)) is None
+
+
+@pytest.mark.skipif(
+    not soffice_available(settings.soffice_bin), reason="LibreOffice is not installed"
+)
 def test_docx_to_pdf_requires_soffice(context, tmp_path):
     from docx import Document
 

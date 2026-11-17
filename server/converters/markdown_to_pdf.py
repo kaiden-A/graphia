@@ -10,6 +10,7 @@ from converters.base import ConversionContext, ConversionError, ConversionResult
 from converters.libreoffice import convert_to_pdf
 
 _IMAGE = re.compile(r"!\[([^\]]*)\]\([^)]*\)")
+_LEADING_H1 = re.compile(r"^\s*<h1\b", re.IGNORECASE)
 
 _CSS = """
 @page { size: A4; margin: 18mm 17mm 20mm; }
@@ -46,10 +47,11 @@ def render_markdown_html(text: str, title: str) -> str:
     safe = _IMAGE.sub(lambda match: match.group(1), safe)
     body = markdown.markdown(safe, extensions=["extra", "sane_lists"])
     safe_title = html.escape(title)
+    heading = "" if _LEADING_H1.match(body) else f"<h1>{safe_title}</h1>"
     return (
         "<!doctype html><html><head><meta charset=\"utf-8\">"
         f"<title>{safe_title}</title><style>{_CSS}</style></head>"
-        f"<body><h1>{safe_title}</h1>{body}</body></html>"
+        f"<body>{heading}{body}</body></html>"
     )
 
 

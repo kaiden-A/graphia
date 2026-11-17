@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from converters.libreoffice import resolve_soffice, soffice_available
 from core.config import settings
 from core.errors import install_error_handlers
 from core.logging import configure_logging
@@ -21,6 +22,17 @@ async def lifespan(app: FastAPI):
         raise RuntimeError("INTERNAL_TOKEN must be set.")
     if settings.is_production and settings.internal_token == "dev-internal-token-change-me":
         logger.warning("INTERNAL_TOKEN is still the development default.")
+
+    binary = resolve_soffice(settings.soffice_bin)
+    if binary is None:
+        logger.warning(
+            "LibreOffice was not found (SOFFICE_BIN=%r). "
+            "DOCX to PDF and Markdown to PDF will fail until it is installed.",
+            settings.soffice_bin,
+        )
+    else:
+        logger.info("LibreOffice is available at %s", binary)
+
     executor = ThreadPoolExecutor(
         max_workers=max(1, settings.processor_max_workers),
         thread_name_prefix="graphia-job",
@@ -41,5 +53,9 @@ app.include_router(router)
 
 
 @app.get("/")
-def root() -> dict[str, str]:
-    return {"service": "graphia-processor", "status": "ok"}
+def root() -> dict[str, str | bool]:
+    return {
+        "service": "graphia-processor",
+        "status": "ok",
+        "soffice": soffice_available(settings.soffice_bin),
+    }
