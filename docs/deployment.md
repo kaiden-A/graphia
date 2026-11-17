@@ -15,7 +15,9 @@ docker build -f server/Dockerfile.processor -t graphia-processor server
 Deploy them as separate Cloud Run services:
 
 - `graphia-api` — public, light, no LibreOffice.
-- `graphia-processor` — private, heavy, includes LibreOffice.
+- `graphia-processor` — heavy, includes LibreOffice. It should only be reachable
+  by the API; today that means public but `X-Internal-Token`-protected (see
+  below), not private.
 
 Set `PROCESSOR_URL` on the API to the processor's Cloud Run URL. Set
 `INTERNAL_TOKEN` to the same long random value on both. The current client uses
@@ -23,6 +25,42 @@ only that shared token. For stronger isolation, add a Google service-account ID
 token in `processor_client.py` and deploy the processor with
 `--no-allow-unauthenticated`; otherwise leave the processor public but
 token-protected.
+
+## CI/CD
+
+`.github/workflows/cd.yml` runs on pushes to `main` that touch `server/**`, and
+on manual dispatch. It builds both images from the `server/` context, pushes
+them to Docker Hub, and deploys both Cloud Run services **by digest**.
+
+Repository settings (Settings → Secrets and variables → Actions):
+
+| Kind | Name | Value |
+|---|---|---|
+| Variable | `APP_NAME` | `graphia`; derives `<APP_NAME>-api` / `<APP_NAME>-processor` for image names and Cloud Run services |
+| Variable | `GCP_REGION` | optional; defaults to `asia-southeast1` |
+| Secret | `DOCKERHUB_USERNAME` | Docker Hub account |
+| Secret | `DOCKERHUB_TOKEN` | Docker Hub access token |
+| Secret | `GCP_SA_KEY` | service-account JSON key for `google-github-actions/auth` |
+
+The GCP project comes from the service-account key, so it is not a variable.
+
+Rules the workflow enforces:
+
+- Images are tagged `sha-<full-commit>`. There is no `:latest`.
+- Cloud Run deploys `image@sha256:...` from `build-push-action`, not a tag.
+  `mirror.gcr.io` can 404 a freshly pushed tag for a minute or two and
+  negative-cache that miss; a digest skips the tag lookup.
+- Each deploy retries with 30/60/90 s backoff to absorb the remaining
+  propagation and rate-limit window. There is no fixed pre-deploy sleep.
+- The processor deploys first, then the API, with a `/health` check between.
+- Deploys never run migrations.
+
+The workflow ships images and the processor's shape flags only. It expects both
+services to exist with their environment variables already set
+(`docs/environment.md`); it does not manage env vars, the runtime service
+account, or IAM beyond keeping both services invokable. See the processor caveat
+above: the workflow keeps the processor public because `processor_client.py`
+authenticates only with `X-Internal-Token`.
 
 ## Zitadel
 

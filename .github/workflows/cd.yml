@@ -1,0 +1,189 @@
+# Graphia CD: build both images, push to Docker Hub, deploy Cloud Run by digest.
+#
+# Repository settings (Settings -> Secrets and variables -> Actions):
+#
+#   Variables
+#     APP_NAME      graphia            -> <APP_NAME>-api / <APP_NAME>-processor
+#     GCP_REGION    asia-southeast1    optional; defaults to asia-southeast1
+#
+#   Secrets
+#     DOCKERHUB_USERNAME
+#     DOCKERHUB_TOKEN
+#     GCP_SA_KEY    service-account JSON key (google-github-actions/auth)
+#
+# The GCP project is read from the service-account key, so it is not a variable.
+#
+# Rules this workflow enforces:
+#   - no ":latest" tag; images are tagged sha-<full-commit>
+#   - Cloud Run deploys the digest from build-push-action, never a tag, so it
+#     does not depend on mirror.gcr.io resolving a freshly pushed tag
+#   - a bounded retry absorbs the remaining mirror propagation / rate-limit
+#     window; there is no blind pre-deploy sleep
+#   - processor deploys before the API
+#   - migrations never run here; run alembic upgrade head manually
+
+name: CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "server/**"
+  workflow_dispatch:
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  IMAGE_TAG: sha-${{ github.sha }}
+  API_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/${{ vars.APP_NAME }}-api
+  PROCESSOR_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/${{ vars.APP_NAME }}-processor
+  API_SERVICE: ${{ vars.APP_NAME }}-api
+  PROCESSOR_SERVICE: ${{ vars.APP_NAME }}-processor
+  GCP_REGION: ${{ vars.GCP_REGION || 'asia-southeast1' }}
+
+jobs:
+  deploy:
+    name: Build, push, deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push API image
+        id: build-api
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          file: ./server/Dockerfile.api
+          push: true
+          tags: ${{ env.API_IMAGE }}:${{ env.IMAGE_TAG }}
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+
+      - name: Build and push processor image
+        id: build-processor
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          file: ./server/Dockerfile.processor
+          push: true
+          tags: ${{ env.PROCESSOR_IMAGE }}:${{ env.IMAGE_TAG }}
+          cache-from: type=gha,scope=processor
+          cache-to: type=gha,mode=max,scope=processor
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Deploy processor
+        env:
+          IMAGE: ${{ env.PROCESSOR_IMAGE }}@${{ steps.build-processor.outputs.digest }}
+        run: |
+          set -euo pipefail
+          # Keep --allow-unauthenticated while processor_client.py authenticates
+          # only with X-Internal-Token. If the client starts sending a Google ID
+          # token, switch this to --no-allow-unauthenticated in the same change.
+          for attempt in 1 2 3 4; do
+            if gcloud run deploy "$PROCESSOR_SERVICE" \
+              --project "${{ steps.auth.outputs.project_id }}" \
+              --region "$GCP_REGION" \
+              --platform managed \
+              --image "$IMAGE" \
+              --allow-unauthenticated \
+              --no-cpu-throttling \
+              --concurrency 1 \
+              --max-instances 1 \
+              --memory 2Gi \
+              --quiet; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 4 ]; then
+              echo "::error::Processor deploy failed after 4 attempts."
+              exit 1
+            fi
+            delay=$((attempt * 30))
+            echo "::warning::Processor deploy attempt $attempt failed; retrying in ${delay}s."
+            sleep "$delay"
+          done
+
+      - name: Check processor health
+        run: |
+          set -euo pipefail
+          url=$(gcloud run services describe "$PROCESSOR_SERVICE" \
+            --project "${{ steps.auth.outputs.project_id }}" \
+            --region "$GCP_REGION" \
+            --format="value(status.url)")
+          echo "Processor URL: $url"
+          curl --fail --silent --show-error \
+            --retry 5 --retry-delay 3 --retry-all-errors \
+            "$url/health"
+          echo
+
+      - name: Deploy API
+        env:
+          IMAGE: ${{ env.API_IMAGE }}@${{ steps.build-api.outputs.digest }}
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4; do
+            if gcloud run deploy "$API_SERVICE" \
+              --project "${{ steps.auth.outputs.project_id }}" \
+              --region "$GCP_REGION" \
+              --platform managed \
+              --image "$IMAGE" \
+              --allow-unauthenticated \
+              --quiet; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 4 ]; then
+              echo "::error::API deploy failed after 4 attempts."
+              exit 1
+            fi
+            delay=$((attempt * 30))
+            echo "::warning::API deploy attempt $attempt failed; retrying in ${delay}s."
+            sleep "$delay"
+          done
+
+      - name: Check API health
+        run: |
+          set -euo pipefail
+          url=$(gcloud run services describe "$API_SERVICE" \
+            --project "${{ steps.auth.outputs.project_id }}" \
+            --region "$GCP_REGION" \
+            --format="value(status.url)")
+          echo "API URL: $url"
+          curl --fail --silent --show-error \
+            --retry 5 --retry-delay 3 --retry-all-errors \
+            "$url/api/health"
+          echo
+
+      - name: Summary
+        run: |
+          {
+            echo "### Deployed"
+            echo ""
+            echo "| Service | Image |"
+            echo "|---|---|"
+            echo "| \`$PROCESSOR_SERVICE\` | \`${{ env.PROCESSOR_IMAGE }}@${{ steps.build-processor.outputs.digest }}\` |"
+            echo "| \`$API_SERVICE\` | \`${{ env.API_IMAGE }}@${{ steps.build-api.outputs.digest }}\` |"
+            echo ""
+            echo "Tag: \`$IMAGE_TAG\`"
+          } >> "$GITHUB_STEP_SUMMARY"
