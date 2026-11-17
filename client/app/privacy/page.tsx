@@ -18,8 +18,9 @@ export default function PrivacyPage() {
           <p className="eyebrow caption-3">Graphia / Privacy</p>
           <h1 className="heading-2">Privacy</h1>
           <p className="body-2">
-            Graphia stores the email and display name from your Zitadel account, a server
-            session, and a job record for each conversion.
+            Graphia stores the email and display name from your Zitadel account or a
+            disposable guest identity, a server session, and a job record for each
+            conversion.
           </p>
 
           <h2 className="heading-5">Files</h2>
@@ -33,7 +34,15 @@ export default function PrivacyPage() {
           <h2 className="heading-5">Authentication</h2>
           <p className="body-3">
             Sign in and account creation are handled by Elysiaa SSO through Zitadel. Graphia
-            does not receive or store your password.
+            does not receive or store your password. A guest session is a disposable local
+            identity with no email, password, or external account attached.
+          </p>
+
+          <h2 className="heading-5">Guest runs</h2>
+          <p className="body-3">
+            Guest sessions expire with the locker. If a guest signs in, the runs from that
+            session move to the signed-in account so the ticket and its download can be
+            collected. Guest identities that are never claimed are removed in cleanup.
           </p>
 
           <h2 className="heading-5">Deletion</h2>

@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowsClockwise, WarningCircle } from "@phosphor-icons/react";
 
 import JobTicket from "@/components/converter/JobTicket";
 import { apiJson, messageForError } from "@/lib/api-client";
+import { formatDate } from "@/lib/files";
 import type { DownloadTicket } from "@/lib/types";
 import { useConversionPolling } from "@/lib/useConversionPolling";
 
@@ -16,6 +18,18 @@ export default function ConversionPage({ id }: { id: string }) {
   const [downloading, setDownloading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const keepRef = useRef<HTMLButtonElement>(null);
+  const deleteRef = useRef<HTMLButtonElement>(null);
+  const wasConfirming = useRef(false);
+
+  useEffect(() => {
+    if (confirmingDelete) {
+      keepRef.current?.focus();
+    } else if (wasConfirming.current) {
+      deleteRef.current?.focus();
+    }
+    wasConfirming.current = confirmingDelete;
+  }, [confirmingDelete]);
 
   async function download() {
     if (!job) return;
@@ -63,11 +77,45 @@ export default function ConversionPage({ id }: { id: string }) {
 
   if (loading && !job) {
     return (
-      <section className="center-page" aria-live="polite" aria-busy="true">
-        <p className="eyebrow caption-3">Loading</p>
-        <div className="skeleton skeleton-title" />
-        <div className="skeleton skeleton-line" />
-        <div className="skeleton skeleton-line skeleton-line--short" />
+      <section className="job-page" aria-live="polite" aria-busy="true">
+        <span className="visually-hidden" role="status">
+          Loading the run ticket.
+        </span>
+
+        <div className="page-lead">
+          <span className="skeleton skeleton-back" />
+        </div>
+
+        <div className="job-layout">
+          <div className="ticket ticket--skeleton">
+            <div className="ticket-head">
+              <span className="skeleton skeleton-line skeleton-line--short" />
+              <span className="skeleton skeleton-chip" />
+            </div>
+            <span className="skeleton skeleton-line skeleton-line--short" />
+            <span className="skeleton skeleton-title" />
+            <span className="skeleton skeleton-line skeleton-line--short" />
+            <div className="ticket-grid ticket-grid--skeleton">
+              {[0, 1, 2, 3, 4, 5].map((item) => (
+                <div key={item}>
+                  <span className="skeleton skeleton-line skeleton-line--short" />
+                  <span className="skeleton skeleton-line" />
+                </div>
+              ))}
+            </div>
+            <span className="skeleton skeleton-track" />
+            <span className="skeleton skeleton-line" />
+            <span className="skeleton skeleton-line skeleton-line--short" />
+          </div>
+
+          <div className="action-panel action-panel--skeleton">
+            <span className="skeleton skeleton-line skeleton-line--short" />
+            <span className="skeleton skeleton-title" />
+            <span className="skeleton skeleton-line" />
+            <span className="skeleton skeleton-line skeleton-line--short" />
+            <span className="skeleton skeleton-button" />
+          </div>
+        </div>
       </section>
     );
   }
@@ -77,7 +125,10 @@ export default function ConversionPage({ id }: { id: string }) {
       <section className="center-page">
         <p className="eyebrow caption-3">Unavailable</p>
         <h1 className="heading-3">The ticket could not be loaded.</h1>
-        <p className="alert">{error ?? "Try refreshing the page."}</p>
+        <p className="alert" role="alert">
+          <WarningCircle size={18} weight="bold" aria-hidden="true" />
+          <span>{error ?? "Try refreshing the page."}</span>
+        </p>
         <Link className="btn btn-primary" href="/convert">
           Back to the converter
         </Link>
@@ -86,6 +137,8 @@ export default function ConversionPage({ id }: { id: string }) {
   }
 
   const finished = job.status === "COMPLETED" && job.downloadAvailable;
+  const gated = finished && job.downloadRequiresAccount;
+  const jobPath = `/conversions/${job.id}`;
 
   return (
     <section className="job-page">
@@ -96,13 +149,22 @@ export default function ConversionPage({ id }: { id: string }) {
         <p className="eyebrow caption-3">Run desk</p>
       </div>
 
+      {error ? (
+        <p className="notice" role="status">
+          <ArrowsClockwise size={16} weight="bold" aria-hidden="true" />
+          <span>
+            Live updates paused. {error} The page is retrying on its own.
+          </span>
+        </p>
+      ) : null}
+
       <div className="job-layout">
         <JobTicket job={job} />
 
         <aside className="action-panel">
           <p className="eyebrow caption-3">Collect</p>
 
-          {finished ? (
+          {finished && !gated ? (
             <>
               <h2 className="heading-5">Take the file.</h2>
               <p className="body-5">
@@ -112,9 +174,33 @@ export default function ConversionPage({ id }: { id: string }) {
                 className="btn btn-primary btn-large btn-wide"
                 onClick={download}
                 disabled={downloading}
+                aria-busy={downloading}
               >
                 {downloading ? "Requesting the link…" : "Download result"}
               </button>
+            </>
+          ) : null}
+
+          {gated ? (
+            <>
+              <h2 className="heading-5">Ready. Sign in to collect it.</h2>
+              <p className="body-5">
+                The conversion finished, and the file stays in the locker until{" "}
+                {formatDate(job.expiresAt)}. Guest downloads need an account. Signing in
+                moves this ticket to your account.
+              </p>
+              <Link
+                className="btn btn-primary btn-large btn-wide"
+                href={`/login?next=${encodeURIComponent(jobPath)}`}
+              >
+                Sign in to download
+              </Link>
+              <Link
+                className="btn btn-ghost btn-wide"
+                href={`/signup?next=${encodeURIComponent(jobPath)}`}
+              >
+                Create an account
+              </Link>
             </>
           ) : null}
 
@@ -156,13 +242,20 @@ export default function ConversionPage({ id }: { id: string }) {
             </>
           ) : null}
 
+          {job.downloadRequiresAccount && !finished ? (
+            <p className="guest-note caption-5">
+              Guest run. Signing in moves this ticket to your account before you collect it.
+            </p>
+          ) : null}
+
           <p className="locker-note caption-4">
             One run, one output. The download key expires quickly on purpose.
           </p>
 
           {downloadError ? (
             <p className="alert" role="alert">
-              {downloadError}
+              <WarningCircle size={18} weight="bold" aria-hidden="true" />
+              <span>{downloadError}</span>
             </p>
           ) : null}
 
@@ -183,6 +276,7 @@ export default function ConversionPage({ id }: { id: string }) {
                   className="btn btn-ghost btn-small"
                   onClick={() => setConfirmingDelete(false)}
                   disabled={deleting}
+                  ref={keepRef}
                 >
                   Keep it
                 </button>
@@ -194,6 +288,7 @@ export default function ConversionPage({ id }: { id: string }) {
                 className="btn btn-ghost btn-small"
                 onClick={() => setConfirmingDelete(true)}
                 disabled={job.status === "PROCESSING"}
+                ref={deleteRef}
               >
                 Delete run
               </button>

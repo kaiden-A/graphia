@@ -2,8 +2,8 @@
 
 ## Goal
 
-A small authenticated document converter with asynchronous processing and no
-message broker.
+A small document converter with asynchronous processing, optional accounts, and
+no message broker.
 
 ```text
 Next.js client
@@ -26,6 +26,18 @@ Cloudflare R2  <--- browser presigned PUT
 - B claims the job atomically, downloads from R2, runs a pure converter, uploads
   the result, and updates the job.
 - The frontend polls A. Downloads use short-lived presigned GET URLs.
+
+## Guest access
+
+- `POST /api/auth/guest` creates a disposable local user with `is_guest=true`
+  and a 24 hour session. No Zitadel round trip is needed to start a run.
+- Guests can create, read, complete, and delete their own jobs. Downloads use
+  `require_member` and return `403` for a guest session.
+- A guest who completes Zitadel login has their jobs reassigned to the member
+  account; the guest user and sessions are deleted. R2 keys keep the upload-time
+  owner prefix, and the job row stores both keys.
+- Guest sessions are rate limited per IP, and cleanup removes unclaimed guests
+  after their jobs expire.
 
 ## Operations
 

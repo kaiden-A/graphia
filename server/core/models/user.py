@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, String, UniqueConstraint, Uuid
+from sqlalchemy import Boolean, DateTime, String, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.models.base import Base
@@ -21,6 +21,7 @@ class User(Base):
     name: Mapped[str | None] = mapped_column(String(120), nullable=True)
     idp_issuer: Mapped[str | None] = mapped_column(String(255), nullable=True)
     zitadel_sub: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    is_guest: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     # Kept nullable for the migration window; Zitadel is the only sign-in path.
     password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(

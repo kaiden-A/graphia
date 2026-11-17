@@ -64,6 +64,12 @@ def require_user(auth: AuthContext = Depends(require_auth)) -> User:
     return auth.user
 
 
+def require_member(user: User = Depends(require_user)) -> User:
+    if user.is_guest:
+        raise AppError(403, "Create an account or sign in to download files.")
+    return user
+
+
 def get_zitadel() -> Iterator[ZitadelClient]:
     with httpx.Client(timeout=10.0) as http:
         yield ZitadelClient(

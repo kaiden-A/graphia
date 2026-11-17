@@ -16,7 +16,7 @@ Graphia has three deployables:
 | `DATABASE_URL`, `DB_SCHEMA` | yes | yes | — |
 | `R2_*` | yes | yes | — |
 | `INTERNAL_TOKEN` | yes | yes | — |
-| Auth, sessions, Zitadel OIDC | yes | — | — |
+| Auth, sessions, Zitadel OIDC, guest limits | yes | — | — |
 | `PROCESSOR_URL` | yes | — | — |
 | Upload/job limits | yes | — | — |
 | `PROCESSOR_MAX_WORKERS`, `CONVERSION_TIMEOUT_SECONDS`, `SOFFICE_BIN`, `GHOSTSCRIPT_BIN` | - | yes | - |
@@ -78,6 +78,8 @@ These are read by `server/app`. The processor does not need them.
 | `PUBLIC_BASE_URL` | no | `http://localhost:3000` | Client origin used for login-failure redirects. |
 | `SESSION_COOKIE_NAME` | no | `graphia_session` | Session cookie name. Must match the client. On Firebase Hosting rewrites use `__session`. |
 | `SESSION_TTL_DAYS` | no | `30` | Session lifetime in days. |
+| `GUEST_SESSION_TTL_HOURS` | no | `24` | Guest session lifetime. Keep it at or below the locker period so the run does not outlive the session. |
+| `GUEST_SESSIONS_PER_HOUR_PER_IP` | no | `10` | In-process guest session throttle. |
 | `COOKIE_SECURE` | no | `false` | Set `true` in HTTPS production. |
 | `PROCESSOR_URL` | yes | `http://localhost:8001` | Service B base URL. Locally `http://localhost:8001`; in Compose `http://processor:8080`; on Cloud Run the processor service URL. |
 | `MAX_UPLOAD_MB` | no | `25` | Upload size limit checked by A. |
@@ -168,6 +170,8 @@ PUBLIC_BASE_URL=https://<client-domain>
 
 SESSION_COOKIE_NAME=graphia_session
 SESSION_TTL_DAYS=30
+GUEST_SESSION_TTL_HOURS=24
+GUEST_SESSIONS_PER_HOUR_PER_IP=10
 COOKIE_SECURE=true
 
 PROCESSOR_URL=https://graphia-processor-<hash>.run.app

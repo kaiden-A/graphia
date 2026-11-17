@@ -3,6 +3,7 @@ from __future__ import annotations
 import hmac
 import logging
 import time
+from datetime import timedelta
 from urllib.parse import urlencode
 
 import httpx
@@ -13,7 +14,7 @@ from sqlalchemy.orm import Session
 from app.dependencies import client_ip, get_zitadel, require_user
 from app.schemas.auth import LogoutResponse, UserPublic
 from app.services import auth_services, oauth_cookie
-from app.services.rate_limit import login_limiter
+from app.services.rate_limit import guest_limiter, login_limiter
 from app.services.session_cookie import clear_session_cookie, set_session_cookie
 from app.services.zitadel import ZitadelClient, ZitadelError
 from core.config import settings
@@ -117,6 +118,51 @@ def signup_get(
     return _start_login(request, zitadel=zitadel, prompt_override="create")
 
 
+@router.post("/guest")
+def guest(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> RedirectResponse:
+    next_path = local_path(request.query_params.get("next"))
+
+    origin = (request.headers.get("origin") or "").strip().rstrip("/")
+    expected = settings.public_base_url.strip().rstrip("/")
+    if origin and origin != expected:
+        return RedirectResponse(
+            _login_url("This guest request did not come from Graphia."),
+            status_code=303,
+        )
+
+    if not guest_limiter.hit(
+        f"guest:{client_ip(request)}",
+        limit=settings.guest_sessions_per_hour_per_ip,
+        window_seconds=3600,
+    ):
+        return RedirectResponse(
+            _login_url("Too many guest sessions from this network. Try again later."),
+            status_code=303,
+        )
+
+    raw_token: str | None = None
+    existing = auth_services.find_active_session(
+        db, request.cookies.get(settings.session_cookie_name)
+    )
+    if existing is None:
+        _, raw_token = auth_services.create_guest_user(
+            db,
+            ttl=timedelta(hours=settings.guest_session_ttl_hours),
+        )
+
+    response = RedirectResponse(next_path, status_code=303)
+    if raw_token:
+        set_session_cookie(
+            response,
+            raw_token,
+            max_age_seconds=settings.guest_session_ttl_seconds,
+        )
+    return response
+
+
 @router.get("/callback")
 def callback(
     request: Request,
@@ -198,6 +244,11 @@ def callback(
 
     raw_token = auth_services.create_session(db, user)
     db.commit()
+    auth_services.claim_guest_conversions(
+        db,
+        raw_token=request.cookies.get(settings.session_cookie_name),
+        user=user,
+    )
 
     response = RedirectResponse(local_path(str(payload.get("next"))), status_code=302)
     set_session_cookie(response, raw_token)
@@ -212,13 +263,15 @@ def logout(
     zitadel: ZitadelClient = Depends(get_zitadel),
 ) -> JSONResponse:
     raw_token = request.cookies.get(settings.session_cookie_name)
+    is_guest = False
     if raw_token:
         session = auth_services.session_by_token(db, raw_token)
         if session is not None:
+            is_guest = bool(session.user and session.user.is_guest)
             auth_services.revoke_session(db, session)
 
     logout_url: str | None = None
-    if settings.zitadel_configured:
+    if settings.zitadel_configured and not is_guest:
         try:
             logout_url = zitadel.end_session_url(
                 post_logout_redirect_uri=settings.zitadel_post_logout_uri

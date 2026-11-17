@@ -5,7 +5,7 @@ import uuid
 from fastapi import APIRouter, Depends, Request, Response, status
 from sqlalchemy.orm import Session
 
-from app.dependencies import client_ip, require_user
+from app.dependencies import client_ip, require_member, require_user
 from app.schemas.conversion import (
     ConversionPublic,
     CreateConversionIn,
@@ -43,7 +43,10 @@ def create_conversion(
         payload=payload,
         storage=get_storage(),
     )
-    return CreateConversionOut(job=ConversionPublic.from_job(job), upload=ticket)
+    return CreateConversionOut(
+        job=ConversionPublic.from_job(job, requires_account=user.is_guest),
+        upload=ticket,
+    )
 
 
 @router.post("/{job_id}/complete-upload", response_model=ConversionPublic)
@@ -58,7 +61,7 @@ def complete_upload(
         job_id=job_id,
         storage=get_storage(),
     )
-    return ConversionPublic.from_job(job)
+    return ConversionPublic.from_job(job, requires_account=user.is_guest)
 
 
 @router.get("/{job_id}", response_model=ConversionPublic)
@@ -68,13 +71,13 @@ def get_conversion(
     db: Session = Depends(get_db),
 ) -> ConversionPublic:
     job = conversion_services.get_conversion(db, user=user, job_id=job_id)
-    return ConversionPublic.from_job(job)
+    return ConversionPublic.from_job(job, requires_account=user.is_guest)
 
 
 @router.get("/{job_id}/download", response_model=DownloadOut)
 def download(
     job_id: uuid.UUID,
-    user: User = Depends(require_user),
+    user: User = Depends(require_member),
     db: Session = Depends(get_db),
 ) -> DownloadOut:
     return conversion_services.get_download(

@@ -5,9 +5,11 @@ from datetime import timedelta
 
 from sqlalchemy import or_, select
 
+from core.config import settings
 from core.database import SessionLocal
 from core.logging import configure_logging
 from core.models.conversion_job import ConversionJob
+from core.models.user import User
 from core.storage import get_storage
 from core.utils import utcnow
 
@@ -50,6 +52,23 @@ def main() -> None:
                 except Exception as exc:
                     print(f"  storage delete failed for {key}: {exc}")
             db.delete(job)
+
+        guest_before = now - timedelta(
+            hours=max(settings.job_expiry_hours, settings.guest_session_ttl_hours) + 24
+        )
+        guests = list(
+            db.execute(
+                select(User).where(
+                    User.is_guest.is_(True),
+                    User.created_at < guest_before,
+                    ~User.jobs.any(),
+                )
+            ).scalars()
+        )
+        for guest in guests:
+            print(f"{'would delete' if args.dry_run else 'deleting'} guest {guest.id}")
+            if not args.dry_run:
+                db.delete(guest)
 
         if not args.dry_run:
             db.commit()

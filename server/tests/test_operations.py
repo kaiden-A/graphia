@@ -2,8 +2,15 @@ from __future__ import annotations
 
 import pytest
 
+from app.schemas.conversion import OperationOut
 from core.models.enums import ConversionOperation
-from core.operations import OPERATIONS, output_filename, prefix_matches, validate_upload_metadata
+from core.operations import (
+    OPERATIONS,
+    get_spec,
+    output_filename,
+    prefix_matches,
+    validate_upload_metadata,
+)
 from processor.registry import CONVERTERS
 
 SIGNATURES = [
@@ -23,6 +30,16 @@ SIGNATURES = [
 def test_every_operation_has_a_spec_and_converter():
     assert set(OPERATIONS) == set(ConversionOperation)
     assert set(CONVERTERS) == set(ConversionOperation)
+
+
+def test_every_operation_has_a_library_group():
+    assert all(spec.group for spec in OPERATIONS.values())
+
+
+def test_operation_schema_exposes_group_and_suffix():
+    out = OperationOut.from_spec(get_spec(ConversionOperation.COMPRESS_PDF))
+    assert out.group == "PDF tools"
+    assert out.outputSuffix == "-compressed"
 
 
 @pytest.mark.parametrize(("operation", "filename", "prefix"), SIGNATURES)

@@ -22,6 +22,13 @@ export function fileExtension(name: string): string {
   return dot === -1 ? "" : clean.slice(dot + 1).toLowerCase();
 }
 
+export function fileStem(name: string): string {
+  const clean = name.split(/[\\/]/).pop() ?? name;
+  const dot = clean.lastIndexOf(".");
+  if (dot <= 0) return clean || "document";
+  return clean.slice(0, dot) || "document";
+}
+
 export function contentTypeFor(file: File): string {
   const extension = fileExtension(file.name);
   return file.type || CONTENT_TYPES[extension] || "application/octet-stream";

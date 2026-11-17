@@ -11,11 +11,19 @@ const STEPS = [
   },
   {
     title: "Collect the result",
-    text: "Ask for a signed download link while the locker still holds it.",
+    text: "Sign in if you are a guest, then ask for a signed download link while the locker holds it.",
   },
 ];
 
-export default function ConvertPage() {
+export default async function ConvertPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ operation?: string | string[] }>;
+}) {
+  const params = await searchParams;
+  const initialOperation =
+    typeof params.operation === "string" ? params.operation : null;
+
   return (
     <div className="convert-page">
       <section className="convert-intro" aria-labelledby="convert-title">
@@ -25,8 +33,9 @@ export default function ConvertPage() {
             Start a run.
           </h1>
           <p className="body-2">
-            Choose a document and a mode. The upload goes straight to private storage, and
-            the ticket keeps the rest of the story.
+            Choose a document. The matching mode is picked for its extension, and you can
+            change it before the run. The upload goes straight to private storage, and the
+            ticket keeps the rest of the story.
           </p>
         </div>
 
@@ -41,12 +50,12 @@ export default function ConvertPage() {
           </div>
           <div>
             <dt>Modes</dt>
-            <dd className="title-1">5</dd>
+            <dd className="title-1">10</dd>
           </div>
         </dl>
       </section>
 
-      <UploadPanel />
+      <UploadPanel initialOperation={initialOperation} />
 
       <section className="convert-steps" aria-labelledby="steps-title">
         <div className="section-head section-head--tight">

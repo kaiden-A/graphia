@@ -16,6 +16,11 @@ conversions/{owner_id}/{job_id}/output/attempt-{n}/result.{ext}
 The attempt segment keeps a retried job from overwriting or deleting another
 attempt's output.
 
+The `{owner_id}` segment is the owner at upload time. When a guest signs in and
+claims a job, the job row changes owner but the existing R2 keys stay in the
+guest prefix. Both keys are stored on the row, so downloads and deletion use the
+stored keys rather than rebuilding the path.
+
 The original filename is stored in PostgreSQL for display and
 `Content-Disposition`; it is never used as an object key.
 

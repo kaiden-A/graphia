@@ -1,8 +1,15 @@
 export type RunStatus = "queued" | "running" | "complete" | "failed" | "expired";
 
 export function StatusChip({ status, label }: { status: RunStatus; label: string }) {
+  const live = status === "queued" || status === "running";
   return (
-    <span className={`status-chip status-chip--${status} caption-3`}>{label}</span>
+    <span
+      className={`status-chip status-chip--${status} caption-3`}
+      data-live={live || undefined}
+    >
+      {live ? <span className="status-chip__dot" aria-hidden="true" /> : null}
+      {label}
+    </span>
   );
 }
 
@@ -26,7 +33,7 @@ export function TicketProgress({
         aria-valuemax={100}
         aria-valuenow={percent}
       >
-        <span style={{ width: `${percent}%` }} />
+        <span style={{ transform: `scaleX(${percent / 100})` }} />
       </div>
       <div className="ticket-progress__stops">
         {labels.map((label, index) => (
@@ -36,6 +43,7 @@ export function TicketProgress({
             data-reached={stage >= index || undefined}
             aria-current={stage === index ? "step" : undefined}
           >
+            <span className="ticket-progress__dot" aria-hidden="true" />
             {label}
           </span>
         ))}

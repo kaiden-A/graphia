@@ -36,6 +36,7 @@ class ConversionPublic(BaseModel):
     outputFilename: str | None
     uploadCompleted: bool
     downloadAvailable: bool
+    downloadRequiresAccount: bool
     attempts: int
     createdAt: int | None
     startedAt: int | None
@@ -43,7 +44,7 @@ class ConversionPublic(BaseModel):
     expiresAt: int | None
 
     @classmethod
-    def from_job(cls, job: ConversionJob) -> "ConversionPublic":
+    def from_job(cls, job: ConversionJob, *, requires_account: bool) -> "ConversionPublic":
         expires_at = ensure_utc(job.expires_at)
         completed = job.status is JobStatus.COMPLETED
         not_expired = bool(expires_at and expires_at > utcnow())
@@ -63,6 +64,7 @@ class ConversionPublic(BaseModel):
             ),
             uploadCompleted=job.upload_completed_at is not None,
             downloadAvailable=completed and not_expired,
+            downloadRequiresAccount=requires_account,
             attempts=job.attempts,
             createdAt=to_ms(job.created_at),
             startedAt=to_ms(job.started_at),
@@ -85,8 +87,10 @@ class OperationOut(BaseModel):
     id: ConversionOperation
     label: str
     description: str
+    group: str
     inputExtensions: list[str]
     outputExtension: str
+    outputSuffix: str
 
     @classmethod
     def from_spec(cls, spec: OperationSpec) -> "OperationOut":
@@ -94,6 +98,8 @@ class OperationOut(BaseModel):
             id=spec.id,
             label=spec.label,
             description=spec.description,
+            group=spec.group,
             inputExtensions=list(spec.input_extensions),
             outputExtension=spec.output_extension,
+            outputSuffix=spec.output_suffix,
         )

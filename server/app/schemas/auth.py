@@ -12,6 +12,7 @@ class UserPublic(BaseModel):
     id: uuid.UUID
     email: str
     name: str | None
+    isGuest: bool
     createdAt: int | None
 
     @classmethod
@@ -20,6 +21,7 @@ class UserPublic(BaseModel):
             id=user.id,
             email=user.email,
             name=user.name,
+            isGuest=user.is_guest,
             createdAt=to_ms(user.created_at),
         )
 

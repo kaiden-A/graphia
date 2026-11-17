@@ -21,13 +21,15 @@ Browser ──PUT/GET────────►  R2  ◄──── Service B 
 
 ## Service A — public API
 
-- Owns auth (Zitadel OIDC + server-side sessions), job records, and R2 signing.
-  The login flow is documented in `docs/auth.md`.
+- Owns auth (Zitadel OIDC, guest sessions, server-side sessions), job records,
+  and R2 signing. The login flow is documented in `docs/auth.md`.
 - Validates upload metadata and the first bytes of the uploaded object.
 - Never receives the file body. The browser gets a presigned PUT URL and sends
   the bytes directly to R2.
 - Calls Service B only after `complete-upload` verifies the object.
 - Polls are served from PostgreSQL; downloads are short-lived presigned GET URLs.
+  Guest sessions can read their own jobs but `GET .../download` requires a member
+  account.
 
 ## Service B — internal processor
 
@@ -42,7 +44,8 @@ Browser ──PUT/GET────────►  R2  ◄──── Service B 
 
 ## Upload sequence
 
-1. `POST /api/conversions` with operation, filename, size, and content type.
+1. `POST /api/conversions` with a member or guest session, operation, filename,
+   size, and content type.
 2. A validates metadata, creates a `PENDING` job, and returns a presigned PUT URL.
 3. Browser `PUT`s the file directly to R2.
 4. `POST /api/conversions/{id}/complete-upload`.
@@ -50,7 +53,8 @@ Browser ──PUT/GET────────►  R2  ◄──── Service B 
    complete, and triggers B.
 6. B claims the job, executes the converter, and writes the result to R2.
 7. Browser polls `GET /api/conversions/{id}`.
-8. `GET /api/conversions/{id}/download` returns a 5-minute signed URL.
+8. `GET /api/conversions/{id}/download` returns a 5-minute signed URL to a member
+   session.
 
 ## Why the trigger is a handshake, not fire-and-forget
 

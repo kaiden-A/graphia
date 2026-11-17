@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, CaretDown, Check } from "@phosphor-icons/react/dist/ssr";
 
+import LandingMotion from "@/components/brand/LandingMotion";
 import Logo from "@/components/brand/Logo";
 import TaglineReveal from "@/components/brand/TaglineReveal";
 
@@ -104,7 +105,7 @@ const STEPS = [
   },
   {
     title: "Collect it",
-    text: "Ask for a signed download link while the locker still holds the result.",
+    text: "Sign in if you are a guest, then ask for a signed download link while the locker holds the result.",
   },
 ];
 
@@ -137,7 +138,7 @@ const FAQS = [
   {
     question: "Who can use Graphia?",
     answer:
-      "Invited accounts through Elysiaa SSO with Zitadel. If registration is invite only, ask the owner.",
+      "Anyone can start a guest run. Accounts are made through Elysiaa SSO with Zitadel; if registration is invite only, ask the owner. Signing in moves your guest runs to the account.",
   },
   {
     question: "Where do the files go?",
@@ -169,6 +170,8 @@ const FAQS = [
 export default function LandingPage() {
   return (
     <div className="landing">
+      <LandingMotion />
+
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
@@ -217,6 +220,14 @@ export default function LandingPage() {
               <a className="landing-text-link caption-1" href="#how">
                 See how a run works
               </a>
+            </div>
+            <div className="landing-guest">
+              <span className="caption-4">No account needed to convert.</span>
+              <form action="/api/auth/guest?next=%2Fconvert" method="post">
+                <button className="text-button text-button--accent caption-4" type="submit">
+                  Continue as guest
+                </button>
+              </form>
             </div>
             <ul className="landing-proof caption-4">
               <li>25 MB per file</li>
@@ -278,7 +289,7 @@ export default function LandingPage() {
         </section>
 
         <section id="formats" className="landing-formats" aria-labelledby="formats-title">
-          <div className="section-head">
+          <div className="section-head" data-reveal>
             <div>
               <p className="eyebrow caption-3">
                 <span className="eyebrow-index">01</span>The formats
@@ -292,7 +303,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="format-table">
+          <div className="format-table" data-reveal-stagger>
             {FORMATS.map((format, index) => (
               <div className="format-row" key={format.from + format.to}>
                 <span className="format-index caption-4">
@@ -313,7 +324,7 @@ export default function LandingPage() {
         </section>
 
         <section id="why" className="landing-benefits" aria-labelledby="benefits-title">
-          <div className="section-head">
+          <div className="section-head" data-reveal>
             <div>
               <p className="eyebrow caption-3">
                 <span className="eyebrow-index">02</span>Why this one
@@ -327,7 +338,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="benefit-grid">
+          <div className="benefit-grid" data-reveal-stagger>
             {BENEFITS.map((benefit, index) => (
               <article className="benefit" key={benefit.title}>
                 <span className="benefit-index caption-4">
@@ -352,7 +363,7 @@ export default function LandingPage() {
         </noscript>
 
         <section id="how" className="landing-how" aria-labelledby="how-title">
-          <div className="section-head">
+          <div className="section-head" data-reveal>
             <div>
               <p className="eyebrow caption-3">
                 <span className="eyebrow-index">03</span>How it works
@@ -366,7 +377,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <ol className="steps">
+          <ol className="steps" data-reveal-stagger>
             {STEPS.map((step, index) => (
               <li className="step" key={step.title}>
                 <span className="step-index caption-4">
@@ -380,7 +391,7 @@ export default function LandingPage() {
         </section>
 
         <section className="landing-privacy on-dark" aria-labelledby="privacy-title">
-          <div className="privacy-inner">
+          <div className="privacy-inner" data-reveal>
             <div className="privacy-copy">
               <p className="eyebrow caption-3">
                 <span className="eyebrow-index">04</span>Under the hood
@@ -399,7 +410,7 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="flow">
+            <div className="flow" data-reveal-stagger>
               {FLOW.map((node, index) => (
                 <div className="flow-item" key={node.name}>
                   {index > 0 ? (
@@ -422,7 +433,7 @@ export default function LandingPage() {
 
         <section id="questions" className="landing-faq" aria-labelledby="faq-title">
           <div className="faq-inner">
-            <div className="section-head">
+            <div className="section-head" data-reveal>
               <div>
                 <p className="eyebrow caption-3">
                   <span className="eyebrow-index">05</span>Questions
@@ -436,7 +447,7 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="faq-grid">
+            <div className="faq-grid" data-reveal-stagger>
               {FAQS.map((item) => (
                 <details key={item.question} className="faq-item">
                   <summary className="title-3">
@@ -451,14 +462,14 @@ export default function LandingPage() {
         </section>
 
         <section className="landing-final on-dark" aria-labelledby="final-title">
-          <div className="final-inner">
+          <div className="final-inner" data-reveal>
             <div>
               <p className="eyebrow caption-3">Ready when you are</p>
               <h2 id="final-title" className="heading-2">
                 Send the document. Keep the result.
               </h2>
               <p className="body-5">
-                Sign in through Elysiaa SSO and send one file through the press.
+                Start as a guest, or sign in through Elysiaa SSO. One file through the press.
               </p>
             </div>
             <Link className="btn btn-primary btn-large" href="/convert">

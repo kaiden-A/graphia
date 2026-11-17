@@ -23,6 +23,7 @@ class OperationSpec:
     id: ConversionOperation
     label: str
     description: str
+    group: str
     input_extensions: tuple[str, ...]
     output_extension: str
     output_media_type: str
@@ -34,6 +35,7 @@ OPERATIONS: dict[ConversionOperation, OperationSpec] = {
         id=ConversionOperation.DOCX_TO_PDF,
         label="DOCX to PDF",
         description="Convert a Word document into a print-ready PDF.",
+        group="Make a PDF",
         input_extensions=("docx",),
         output_extension="pdf",
         output_media_type="application/pdf",
@@ -42,6 +44,7 @@ OPERATIONS: dict[ConversionOperation, OperationSpec] = {
         id=ConversionOperation.PPTX_TO_PDF,
         label="PPTX to PDF",
         description="Turn a slide deck into a PDF handout.",
+        group="Make a PDF",
         input_extensions=("pptx",),
         output_extension="pdf",
         output_media_type="application/pdf",
@@ -50,6 +53,7 @@ OPERATIONS: dict[ConversionOperation, OperationSpec] = {
         id=ConversionOperation.XLSX_TO_PDF,
         label="XLSX to PDF",
         description="Lay out a workbook as a paginated PDF.",
+        group="Make a PDF",
         input_extensions=("xlsx",),
         output_extension="pdf",
         output_media_type="application/pdf",
@@ -58,6 +62,7 @@ OPERATIONS: dict[ConversionOperation, OperationSpec] = {
         id=ConversionOperation.IMAGES_TO_PDF,
         label="Image to PDF",
         description="Place one image on a single PDF page.",
+        group="Make a PDF",
         input_extensions=IMAGE_EXTENSIONS,
         output_extension="pdf",
         output_media_type="application/pdf",
@@ -66,6 +71,7 @@ OPERATIONS: dict[ConversionOperation, OperationSpec] = {
         id=ConversionOperation.MARKDOWN_TO_PDF,
         label="Markdown to PDF",
         description="Render Markdown as a styled PDF document.",
+        group="Make a PDF",
         input_extensions=("md", "markdown"),
         output_extension="pdf",
         output_media_type="application/pdf",
@@ -74,6 +80,7 @@ OPERATIONS: dict[ConversionOperation, OperationSpec] = {
         id=ConversionOperation.PDF_TO_MARKDOWN,
         label="PDF to Markdown",
         description="Extract selectable text from a PDF, page by page.",
+        group="Read a PDF",
         input_extensions=("pdf",),
         output_extension="md",
         output_media_type="text/markdown",
@@ -82,6 +89,7 @@ OPERATIONS: dict[ConversionOperation, OperationSpec] = {
         id=ConversionOperation.PDF_TO_TEXT,
         label="PDF to Text",
         description="Extract selectable text from a PDF as plain text.",
+        group="Read a PDF",
         input_extensions=("pdf",),
         output_extension="txt",
         output_media_type="text/plain",
@@ -90,6 +98,7 @@ OPERATIONS: dict[ConversionOperation, OperationSpec] = {
         id=ConversionOperation.COMPRESS_PDF,
         label="Compress PDF",
         description="Shrink a PDF for sharing while keeping the text readable.",
+        group="PDF tools",
         input_extensions=("pdf",),
         output_extension="pdf",
         output_media_type="application/pdf",
@@ -99,6 +108,7 @@ OPERATIONS: dict[ConversionOperation, OperationSpec] = {
         id=ConversionOperation.DOCX_TO_MARKDOWN,
         label="DOCX to Markdown",
         description="Turn a Word document into clean Markdown. Images are omitted.",
+        group="Make Markdown",
         input_extensions=("docx",),
         output_extension="md",
         output_media_type="text/markdown",
@@ -107,6 +117,7 @@ OPERATIONS: dict[ConversionOperation, OperationSpec] = {
         id=ConversionOperation.TXT_TO_MARKDOWN,
         label="Text to Markdown",
         description="Turn a plain text file into clean Markdown paragraphs.",
+        group="Make Markdown",
         input_extensions=("txt",),
         output_extension="md",
         output_media_type="text/markdown",

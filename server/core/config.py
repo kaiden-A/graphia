@@ -40,6 +40,8 @@ class Settings(BaseSettings):
     max_upload_mb: int = 25
     max_active_jobs_per_user: int = 3
     uploads_per_hour_per_ip: int = 20
+    guest_sessions_per_hour_per_ip: int = 10
+    guest_session_ttl_hours: int = 24
     daily_job_limit: int = 200
     job_expiry_hours: int = 24
     upload_url_ttl_seconds: int = 600
@@ -61,6 +63,10 @@ class Settings(BaseSettings):
     @property
     def session_ttl_seconds(self) -> int:
         return self.session_ttl_days * 24 * 60 * 60
+
+    @property
+    def guest_session_ttl_seconds(self) -> int:
+        return self.guest_session_ttl_hours * 60 * 60
 
     @property
     def zitadel_issuer_url(self) -> str:

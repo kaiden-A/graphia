@@ -7,6 +7,7 @@ export interface User {
   id: string;
   email: string;
   name: string | null;
+  isGuest: boolean;
   createdAt: number | null;
 }
 
@@ -18,8 +19,10 @@ export interface Operation {
   id: OperationId;
   label: string;
   description: string;
+  group: string;
   inputExtensions: string[];
   outputExtension: string;
+  outputSuffix: string;
 }
 
 export interface Conversion {
@@ -34,6 +37,7 @@ export interface Conversion {
   outputFilename: string | null;
   uploadCompleted: boolean;
   downloadAvailable: boolean;
+  downloadRequiresAccount: boolean;
   attempts: number;
   createdAt: number | null;
   startedAt: number | null;

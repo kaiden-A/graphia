@@ -107,7 +107,8 @@ stays square.
 `/` is public and uses the classic hero plus sections layout.
 
 1. Floating nav: brand, four section links, sign in, one cobalt CTA.
-2. Hero: eyebrow, 60px heading, subhead, primary CTA, text link, three product facts.
+2. Hero: eyebrow, 60px heading, subhead, primary CTA, text link, a guest link,
+   three product facts.
 3. Specimen sheet: a sample run ticket with crop marks, a perforation, a metadata
    grid, and a cobalt stamp. It is labelled as a sample.
 4. Format matrix: ten rows, index, `DOCX → PDF` chips, description, accepted
@@ -125,11 +126,20 @@ specimen, the upload panel, the ticket, and the action panel.
 
 ## App
 
-- `/convert`: intro with three limits, a sheet style upload panel, a vertical mode
-  list with radio semantics, and a three step footer.
+- `/convert`: intro with three limits, a sheet style upload panel, grouped modes
+  with radio semantics, a ready preview that names the input and output, a phase
+  rail while the upload runs, and a three step footer.
+- `/library`: every mode grouped by intent. Each row is a link into `/convert`
+  with that mode selected. Loading uses mode shaped skeletons, errors offer a
+  retry, and a guest line explains the download gate.
 - `/conversions/[id]`: a ticket on sand 50 with a status chip, a metadata grid, a
-  four pixel progress rule, a run state row, and a sticky collect panel.
+  four pixel progress rule, a run state row, and a sticky collect panel. Elapsed
+  time is printed in the foot while a run is live.
+- Guest sessions show a dot and a `Sign in` action in the nav. A completed guest
+  run replaces the download button with the sign in gate; the ticket is claimed
+  by the account during login.
 - `/login`, `/signup`, 404: split layout, espresso aside with facts, sand form card.
+  Both auth pages offer `Continue as guest` under the SSO actions.
 - `/privacy`, `/terms`: 720px reading measure with hairlines.
 
 States are explicit: hover, `translateY(1px)` press, cobalt focus ring (sand on
@@ -157,6 +167,15 @@ Base curve `cubic-bezier(0.22, 1, 0.36, 1)`. Color and opacity shifts run 300ms,
 layout and position 500ms, the tagline 600ms per word. Animate only transform and
 opacity. The tagline uses one IntersectionObserver per word, with the final state
 rendered immediately under `prefers-reduced-motion`. No scroll listeners.
+
+The authored moment is the ticket stamp: when a run becomes ready, the status chip
+stamps in with a short scale and rotation, and the progress rule fills to the end.
+Supporting motion explains state rather than decorating it: mode rows and library
+rows enter with a capped stagger, the selected check scales in, the dropzone shows
+a single scan line while dragging, the phase rail advances through upload steps,
+and live status dots pulse. Progress fills use `scaleX`, never width. Under
+`prefers-reduced-motion` all delays and looping animations are removed; state
+changes stay visible.
 
 ## Copy rules
 

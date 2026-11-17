@@ -28,6 +28,10 @@ scrapbook, the Greek journal, or gradient-heavy backgrounds.
   Session tokens are random; only their sha256 hash is stored. The OAuth
   handshake cookie is signed with `APP_SECRET`. Every job read/write is scoped by
   `owner_id`; not-owned is 404. See `docs/auth.md` and `docs/environment.md`.
+- Guest runs use a disposable local user with `is_guest=true` and a 24 hour
+  session. Guests can convert and read their own jobs, but `GET .../download`
+  uses `require_member` and returns 403. Signing in claims guest jobs; the job
+  row keeps the R2 keys from upload time.
 - A and B never import each other. They share only `server/core` and communicate
   through HTTP, PostgreSQL, and R2.
 - `server/converters` contains pure conversion code. It must not import FastAPI,

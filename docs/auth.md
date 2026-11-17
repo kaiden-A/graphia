@@ -57,6 +57,8 @@ PUBLIC_BASE_URL=http://localhost:3000
 SESSION_COOKIE_NAME=graphia_session
 SESSION_TTL_DAYS=30
 COOKIE_SECURE=false
+GUEST_SESSION_TTL_HOURS=24
+GUEST_SESSIONS_PER_HOUR_PER_IP=10
 ```
 
 `APP_SECRET` signs the OAuth handshake cookie. It must be stable across API
@@ -80,6 +82,24 @@ Existing conversion jobs stay attached to the adopted user row. If an email is
 already linked to a different Zitadel subject, sign-in is rejected rather than
 silently reassigning ownership.
 
+## Guest access
+
+A visitor can convert without an account:
+
+- `POST /api/auth/guest` creates a disposable local user with `is_guest=true`.
+  The user has a generated `@guest.graphia.local` email, no Zitadel subject, no
+  password, and a 24 hour session.
+- Guests can create, read, complete, and delete their own jobs. The download
+  endpoint uses `require_member` and returns `403` for a guest session.
+- The guest form is rate limited by IP. The endpoint checks the `Origin` header
+  when a browser sends one, so another site cannot silently mint sessions.
+- When a guest completes a Zitadel login, jobs owned by the guest session are
+  reassigned to the member account and the guest user plus its sessions are
+  deleted. R2 keys keep the guest prefix from upload time; the job row stores the
+  full keys, so downloads follow the row.
+- Guest sessions expire with the locker. `scripts/cleanup_expired.py` removes
+  unclaimed guest users that have no jobs left.
+
 ## Security checks
 
 - PKCE S256; verifier stays in the signed HttpOnly handshake cookie.
@@ -93,6 +113,8 @@ silently reassigning ownership.
 - No Zitadel tokens are stored in the browser or database; only the local
   session token hash is stored.
 - `next` accepts only local paths.
+- Guest creation checks `Origin` when present and is rate limited per IP.
+- Guest downloads are blocked at the API, not only hidden in the client.
 
 ## Endpoints
 
@@ -100,8 +122,9 @@ silently reassigning ownership.
 |---|---|
 | `GET /api/auth/login` | Start login. Supports `next`, `login_hint`, `prompt`. |
 | `GET /api/auth/signup` | Start login with `prompt=create`. |
+| `POST /api/auth/guest` | Create a guest session and redirect to `next`. |
 | `GET /api/auth/callback` | OIDC callback. |
-| `GET /api/auth/me` | Current local user. |
+| `GET /api/auth/me` | Current local user, including `isGuest`. |
 | `POST /api/auth/logout` | Revoke local session; returns `{ logoutUrl }`. |
 
 ## Troubleshooting
@@ -120,3 +143,5 @@ silently reassigning ownership.
   email; the app created a new user. Link the old row or update its email.
 - **`APP_SECRET` changed:** in-flight sign-ins fail with a state-cookie error;
   existing sessions remain valid.
+- **Guest download returns 403:** expected. Sign in or create an account; the
+  guest run is claimed by that account during the callback.

@@ -4,7 +4,7 @@ from sqlalchemy import select
 
 from core.config import settings
 from core.models.conversion_job import ConversionJob
-from core.models.enums import ConversionOperation
+from core.models.enums import ConversionOperation, JobStatus
 from core.models.user import User
 from tests.conftest import (
     FakeZitadel,
@@ -158,3 +158,117 @@ def test_me_requires_session(api_client):
     response = api_client.get("/api/auth/me")
     assert response.status_code == 401
     assert response.json()["error"] == "Not signed in."
+
+
+def test_guest_session_can_be_created(api_client, db: TestDatabase):
+    response = api_client.post("/api/auth/guest?next=/convert", follow_redirects=False)
+    assert response.status_code == 303
+    assert response.headers["location"] == "/convert"
+    assert api_client.cookies.get(settings.session_cookie_name)
+
+    me = api_client.get("/api/auth/me")
+    assert me.status_code == 200
+    assert me.json()["isGuest"] is True
+
+    session = db.session_factory()
+    try:
+        guest = session.scalar(select(User).where(User.is_guest.is_(True)))
+        assert guest is not None
+        assert guest.email.endswith("@guest.graphia.local")
+        assert guest.zitadel_sub is None
+    finally:
+        session.close()
+
+
+def test_guest_creation_rejects_a_foreign_origin(api_client):
+    response = api_client.post(
+        "/api/auth/guest",
+        headers={"Origin": "https://evil.test"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert "/login?error=" in response.headers["location"]
+    assert api_client.get("/api/auth/me").status_code == 401
+
+
+def test_guest_can_read_a_job_but_not_download(
+    api_client,
+    db: TestDatabase,
+):
+    response = api_client.post("/api/auth/guest", follow_redirects=False)
+    assert response.status_code == 303
+
+    session = db.session_factory()
+    try:
+        guest = session.scalar(select(User).where(User.is_guest.is_(True)))
+        assert guest is not None
+        job = make_job(
+            db,
+            owner=guest,
+            status=JobStatus.COMPLETED,
+            with_output=True,
+        )
+        job_id = job.id
+    finally:
+        session.close()
+
+    current = api_client.get(f"/api/conversions/{job_id}")
+    assert current.status_code == 200
+    assert current.json()["downloadAvailable"] is True
+    assert current.json()["downloadRequiresAccount"] is True
+
+    download = api_client.get(f"/api/conversions/{job_id}/download")
+    assert download.status_code == 403
+    assert "sign in" in download.json()["error"].lower()
+
+
+def test_signing_in_claims_guest_jobs(
+    api_client,
+    fake_zitadel: FakeZitadel,
+    db: TestDatabase,
+):
+    response = api_client.post("/api/auth/guest", follow_redirects=False)
+    assert response.status_code == 303
+
+    session = db.session_factory()
+    try:
+        guest = session.scalar(select(User).where(User.is_guest.is_(True)))
+        assert guest is not None
+        guest_id = guest.id
+        job = make_job(
+            db,
+            owner=guest,
+            status=JobStatus.COMPLETED,
+            with_output=True,
+        )
+        job_id = job.id
+    finally:
+        session.close()
+
+    begin_login(api_client, fake_zitadel)
+    signed_in = complete_login(api_client, fake_zitadel)
+    assert signed_in.status_code == 302
+    assert api_client.get("/api/auth/me").json()["isGuest"] is False
+
+    session = db.session_factory()
+    try:
+        member = session.scalar(select(User).where(User.email == "ada@example.com"))
+        assert member is not None
+        claimed = session.get(ConversionJob, job_id)
+        assert claimed is not None
+        assert claimed.owner_id == member.id
+        assert session.get(User, guest_id) is None
+
+        current = api_client.get(f"/api/conversions/{job_id}")
+        assert current.status_code == 200
+        assert current.json()["downloadRequiresAccount"] is False
+    finally:
+        session.close()
+
+
+def test_guest_logout_does_not_open_zitadel(api_client):
+    api_client.post("/api/auth/guest", follow_redirects=False)
+    response = api_client.post("/api/auth/logout")
+    assert response.status_code == 200
+    assert response.json()["logoutUrl"] is None
+    assert api_client.get("/api/auth/me").status_code == 401

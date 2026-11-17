@@ -30,7 +30,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.dependencies import get_zitadel
 from app.main import app as api_app
-from app.services.rate_limit import login_limiter, upload_limiter
+from app.services.rate_limit import guest_limiter, login_limiter, upload_limiter
 from core.config import settings
 from core.database import get_db
 from core.models import Base
@@ -165,6 +165,7 @@ def db() -> TestDatabase:
 def reset_limiters():
     login_limiter.reset()
     upload_limiter.reset()
+    guest_limiter.reset()
     yield
 
 

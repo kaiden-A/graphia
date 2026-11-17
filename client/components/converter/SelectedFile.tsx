@@ -28,6 +28,7 @@ export default function SelectedFile({ file, disabled, onRemove }: Props) {
         className="btn btn-ghost btn-small"
         onClick={onRemove}
         disabled={disabled}
+        aria-label={`Remove ${file.name}`}
       >
         Remove
       </button>

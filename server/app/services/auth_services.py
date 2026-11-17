@@ -1,17 +1,24 @@
 from __future__ import annotations
 
+import logging
+import uuid
 from datetime import timedelta
 
-from sqlalchemy import select
+from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from core.config import settings
 from core.errors import AppError
+from core.models.conversion_job import ConversionJob
 from core.models.session import UserSession
 from core.models.user import User
 from core.security import hash_token, new_session_token
-from core.utils import utcnow
+from core.utils import ensure_utc, utcnow
+
+logger = logging.getLogger(__name__)
+
+GUEST_EMAIL_DOMAIN = "guest.graphia.local"
 
 
 def normalize_email(email: str) -> str:
@@ -107,7 +114,12 @@ def find_or_create_zitadel_user(
     return user
 
 
-def create_session(db: Session, user: User) -> str:
+def create_session(
+    db: Session,
+    user: User,
+    *,
+    ttl: timedelta | None = None,
+) -> str:
     raw_token, token_hash = new_session_token()
     now = utcnow()
     session = UserSession(
@@ -115,10 +127,93 @@ def create_session(db: Session, user: User) -> str:
         token_hash=token_hash,
         created_at=now,
         last_seen_at=now,
-        expires_at=now + timedelta(days=settings.session_ttl_days),
+        expires_at=now + (ttl or timedelta(days=settings.session_ttl_days)),
     )
     db.add(session)
     return raw_token
+
+
+def create_guest_user(
+    db: Session,
+    *,
+    ttl: timedelta | None = None,
+) -> tuple[User, str]:
+    """Create a disposable account so a visitor can run one or more jobs."""
+    suffix = uuid.uuid4().hex
+    user = User(
+        email=f"guest+{suffix}@{GUEST_EMAIL_DOMAIN}",
+        name="Guest",
+        is_guest=True,
+    )
+    db.add(user)
+    db.flush()
+    raw_token = create_session(db, user, ttl=ttl)
+    db.commit()
+    db.refresh(user)
+    return user, raw_token
+
+
+def find_active_session(db: Session, raw_token: str | None) -> UserSession | None:
+    if not raw_token:
+        return None
+    session = db.execute(
+        select(UserSession)
+        .options(joinedload(UserSession.user))
+        .where(UserSession.token_hash == hash_token(raw_token))
+    ).scalar_one_or_none()
+    now = utcnow()
+    if session is None or session.revoked_at is not None:
+        return None
+    expires_at = ensure_utc(session.expires_at)
+    if expires_at is None or expires_at <= now:
+        return None
+    return session
+
+
+def claim_guest_conversions(
+    db: Session,
+    *,
+    raw_token: str | None,
+    user: User,
+) -> int:
+    """Move a guest's jobs to the account that just signed in.
+
+    R2 keys keep the guest prefix from upload time. The job row stores both
+    keys, so ownership and downloads follow the row, not the key prefix.
+    """
+    session = find_active_session(db, raw_token)
+    if (
+        session is None
+        or session.user is None
+        or not session.user.is_guest
+        or session.user_id == user.id
+    ):
+        return 0
+
+    guest_id = session.user_id
+    try:
+        moved = db.execute(
+            update(ConversionJob)
+            .where(ConversionJob.owner_id == guest_id)
+            .values(owner_id=user.id)
+            .execution_options(synchronize_session=False)
+        )
+        db.execute(
+            delete(UserSession)
+            .where(UserSession.user_id == guest_id)
+            .execution_options(synchronize_session=False)
+        )
+        db.execute(
+            delete(User)
+            .where(User.id == guest_id, User.is_guest.is_(True))
+            .execution_options(synchronize_session=False)
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        logger.exception("Could not transfer guest conversions")
+        return 0
+    return int(moved.rowcount or 0)
 
 
 def revoke_session(db: Session, session: UserSession) -> None:
