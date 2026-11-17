@@ -45,8 +45,7 @@ env:
   PROCESSOR_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/${{ vars.APP_NAME }}-processor
   API_SERVICE: ${{ vars.APP_NAME }}-api
   PROCESSOR_SERVICE: ${{ vars.APP_NAME }}-processor
-  GCP_REGION: ${{ vars.GCP_REGION || 'asia-southeast1' }}
-
+  GCP_REGION: 'asia-southeast1' 
 jobs:
   deploy:
     name: Build, push, deploy
