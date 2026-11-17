@@ -29,11 +29,16 @@ Cloudflare R2  <--- browser presigned PUT
 
 ## Operations
 
-1. DOCX → PDF (LibreOffice)
-2. PDF → Markdown (PyMuPDF + pypdf)
-3. TXT → Markdown
-4. Markdown → PDF (Python-Markdown → HTML → LibreOffice)
-5. Images → PDF (Pillow)
+1. DOCX → PDF (LibreOffice Writer)
+2. PPTX → PDF (LibreOffice Impress)
+3. XLSX → PDF (LibreOffice Calc)
+4. PDF → Markdown (PyMuPDF)
+5. PDF → Text (PyMuPDF)
+6. DOCX → Markdown (mammoth + markdownify)
+7. TXT → Markdown
+8. Markdown → PDF (Python-Markdown → HTML → LibreOffice)
+9. Images → PDF (Pillow)
+10. Compress PDF (Ghostscript)
 
 ## Status model
 

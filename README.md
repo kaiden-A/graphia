@@ -4,7 +4,7 @@ A small, asynchronous document converter.
 
 - **Client** — Next.js App Router
 - **Service A** — FastAPI public API, auth, job records, signed R2 URLs
-- **Service B** — FastAPI internal processor, LibreOffice/PyMuPDF/Pillow conversions
+- **Service B** — FastAPI internal processor, LibreOffice/PyMuPDF/Pillow/Ghostscript conversions
 - **Database** — Neon PostgreSQL via SQLAlchemy + pg8000
 - **Storage** — Cloudflare R2; files go **directly from the browser to R2** with a presigned PUT URL
 
@@ -26,9 +26,10 @@ A small, asynchronous document converter.
    the Zitadel OIDC values. The file is annotated with `[shared]`, `[api]`, and
    `[processor]` scopes; `docs/environment.md` has the full table and production
    split, and `docs/auth.md` covers the Zitadel application setup. Keep the
-   Zitadel redirect URI in sync with the client port. For DOCX→PDF
+   Zitadel redirect URI in sync with the client port. For DOCX/PPTX/XLSX→PDF
    and Markdown→PDF locally, install LibreOffice and put `soffice` on `PATH` (or
-   set `SOFFICE_BIN`); otherwise use the processor Docker image. Configure R2
+   set `SOFFICE_BIN`). For Compress PDF, install Ghostscript and set
+   `GHOSTSCRIPT_BIN`. Otherwise use the processor Docker image. Configure R2
    bucket CORS for `PUT` from the client origin; see `docs/storage.md`.
 4. Run all three services:
 
@@ -57,7 +58,7 @@ A small, asynchronous document converter.
 
 ## Tests
 
-Mock unit tests do not need Neon, R2, or LibreOffice:
+Mock unit tests do not need Neon, R2, LibreOffice, or Ghostscript:
 
 ```powershell
 npm run test:unit

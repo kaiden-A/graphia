@@ -78,7 +78,7 @@ export default function OpenGraphImage() {
         >
           <div style={{ display: "flex", gap: 32 }}>
             <span>25 MB per file</span>
-            <span>5 modes</span>
+            <span>10 modes</span>
             <span>Files expire in 24 hours</span>
           </div>
           <div style={{ width: 96, height: 6, background: "#0047AB" }} />

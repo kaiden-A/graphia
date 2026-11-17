@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from converters.ghostscript import ghostscript_available, resolve_ghostscript
 from converters.libreoffice import resolve_soffice, soffice_available
 from core.config import settings
 from core.errors import install_error_handlers
@@ -27,11 +28,21 @@ async def lifespan(app: FastAPI):
     if binary is None:
         logger.warning(
             "LibreOffice was not found (SOFFICE_BIN=%r). "
-            "DOCX to PDF and Markdown to PDF will fail until it is installed.",
+            "DOCX, PPTX, XLSX, and Markdown to PDF will fail until it is installed.",
             settings.soffice_bin,
         )
     else:
         logger.info("LibreOffice is available at %s", binary)
+
+    ghostscript = resolve_ghostscript(settings.ghostscript_bin)
+    if ghostscript is None:
+        logger.warning(
+            "Ghostscript was not found (GHOSTSCRIPT_BIN=%r). "
+            "Compress PDF will fail until it is installed.",
+            settings.ghostscript_bin,
+        )
+    else:
+        logger.info("Ghostscript is available at %s", ghostscript)
 
     executor = ThreadPoolExecutor(
         max_workers=max(1, settings.processor_max_workers),
@@ -58,4 +69,5 @@ def root() -> dict[str, str | bool]:
         "service": "graphia-processor",
         "status": "ok",
         "soffice": soffice_available(settings.soffice_bin),
+        "ghostscript": ghostscript_available(settings.ghostscript_bin),
     }

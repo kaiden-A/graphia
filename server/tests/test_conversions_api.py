@@ -21,10 +21,15 @@ def test_operations_endpoint(api_client):
     ids = {item["id"] for item in response.json()}
     assert ids == {
         "docx_to_pdf",
-        "pdf_to_markdown",
-        "txt_to_markdown",
-        "markdown_to_pdf",
+        "pptx_to_pdf",
+        "xlsx_to_pdf",
         "images_to_pdf",
+        "markdown_to_pdf",
+        "pdf_to_markdown",
+        "pdf_to_text",
+        "compress_pdf",
+        "docx_to_markdown",
+        "txt_to_markdown",
     }
 
 

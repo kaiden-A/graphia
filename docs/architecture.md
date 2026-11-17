@@ -15,7 +15,7 @@ Next.js  ──/api rewrite──►  Service A (FastAPI)
                                │  atomic claim, status updates
                                ▼
 Browser ──PUT/GET────────►  R2  ◄──── Service B (FastAPI)
-                               │        LibreOffice / PyMuPDF / Pillow
+                               │        LibreOffice / PyMuPDF / Pillow / Ghostscript
                                └──────── run_job()
 ```
 

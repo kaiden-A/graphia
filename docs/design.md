@@ -110,7 +110,7 @@ stays square.
 2. Hero: eyebrow, 60px heading, subhead, primary CTA, text link, three product facts.
 3. Specimen sheet: a sample run ticket with crop marks, a perforation, a metadata
    grid, and a cobalt stamp. It is labelled as a sample.
-4. Format matrix: five rows, index, `DOCX → PDF` chips, description, accepted
+4. Format matrix: ten rows, index, `DOCX → PDF` chips, description, accepted
    extensions. This replaces a three card feature grid.
 5. Benefits: four numbered rows with hairlines.
 6. Tagline reveal: full bleed espresso, two explicit lines, one word at a time.
@@ -165,7 +165,7 @@ rendered immediately under `prefers-reduced-motion`. No scroll listeners.
 - No italics, no exclamation marks, no cute interjections.
 - No orphaned words: `text-wrap: balance` on headings, `pretty` on body.
 - Never invent customers, logos, prices, or statistics. Product facts come from the
-  repository: 25 MB per file, five modes, 24 hour retention, direct R2 upload.
+  repository: 25 MB per file, ten modes, 24 hour retention, direct R2 upload.
 
 ## Do not
 

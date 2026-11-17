@@ -15,9 +15,9 @@ docker build -f server/Dockerfile.processor -t graphia-processor server
 Deploy them as separate Cloud Run services:
 
 - `graphia-api` — public, light, no LibreOffice.
-- `graphia-processor` — heavy, includes LibreOffice. It should only be reachable
-  by the API; today that means public but `X-Internal-Token`-protected (see
-  below), not private.
+- `graphia-processor` — heavy, includes LibreOffice and Ghostscript. It should
+  only be reachable by the API; today that means public but
+  `X-Internal-Token`-protected (see below), not private.
 
 Set `PROCESSOR_URL` on the API to the processor's Cloud Run URL. Set
 `INTERNAL_TOKEN` to the same long random value on both. The current client uses
@@ -110,7 +110,8 @@ gcloud run deploy graphia-processor `
 
 A deploy from the Cloud Console uses Cloud Run's defaults (CPU throttled,
 512 MiB, concurrency 80) and makes conversions crawl, because the work runs
-after the `202` response. Use the CD workflow or the flags above.
+after the `202` response. Use the CD workflow or the flags above. PPTX and XLSX
+renders are the heaviest jobs, so treat 2 GiB as the floor for the processor.
 
 The future Cloud Tasks migration removes the need for CPU always allocated.
 

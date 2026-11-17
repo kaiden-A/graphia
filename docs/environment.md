@@ -19,7 +19,7 @@ Graphia has three deployables:
 | Auth, sessions, Zitadel OIDC | yes | — | — |
 | `PROCESSOR_URL` | yes | — | — |
 | Upload/job limits | yes | — | — |
-| `PROCESSOR_MAX_WORKERS`, `CONVERSION_TIMEOUT_SECONDS`, `SOFFICE_BIN` | — | yes | — |
+| `PROCESSOR_MAX_WORKERS`, `CONVERSION_TIMEOUT_SECONDS`, `SOFFICE_BIN`, `GHOSTSCRIPT_BIN` | - | yes | - |
 | `SESSION_COOKIE_NAME` | yes | — | yes (must match) |
 | `API_ORIGIN` | — | — | yes |
 
@@ -96,8 +96,9 @@ them.
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
 | `PROCESSOR_MAX_WORKERS` | no | `1` | In-process job executor size. Keep at `1` for LibreOffice memory safety. |
-| `CONVERSION_TIMEOUT_SECONDS` | no | `300` | LibreOffice subprocess timeout. |
+| `CONVERSION_TIMEOUT_SECONDS` | no | `300` | LibreOffice and Ghostscript subprocess timeout. |
 | `SOFFICE_BIN` | no | `soffice` | LibreOffice executable. Locally may be `soffice` or a full path. In the processor image it is on `PATH`. |
+| `GHOSTSCRIPT_BIN` | no | `gs` | Ghostscript executable for Compress PDF. Locally may be `gs` or a full path such as `C:/Program Files/gs/.../gswin64c.exe`. In the processor image it is on `PATH`. |
 
 ## Client
 
@@ -202,12 +203,13 @@ INTERNAL_TOKEN=...
 PROCESSOR_MAX_WORKERS=1
 CONVERSION_TIMEOUT_SECONDS=300
 SOFFICE_BIN=soffice
+GHOSTSCRIPT_BIN=gs
 ```
 
 Notice what is absent:
 
 - Processor has no `PROCESSOR_URL`, no cookie settings, and no Zitadel settings.
-- API has no `SOFFICE_BIN`, `PROCESSOR_MAX_WORKERS`, or
+- API has no `SOFFICE_BIN`, `GHOSTSCRIPT_BIN`, `PROCESSOR_MAX_WORKERS`, or
   `CONVERSION_TIMEOUT_SECONDS`.
 - `INTERNAL_TOKEN` is the only auth value both services need.
 
@@ -264,6 +266,9 @@ processor caveat.
   invite code.
 - `COOKIE_SECURE=true` on HTTPS only.
 - `PROCESSOR_URL` belongs only to the API.
+- `SOFFICE_BIN` and `GHOSTSCRIPT_BIN` are processor-only. A missing binary fails
+  only its own operations, and `GET /` on the processor reports which are
+  available.
 - Migrations are not run by either service at startup. Run
   `python -m alembic upgrade head` manually.
 - The processor does not call the API. The API never waits for conversion

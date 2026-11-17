@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: "Graphia — document conversion, privately run",
   description:
-    "Turn DOCX, PDF, Markdown, text, and images into the file you need. Uploads go straight to private storage, and every run returns a ticket you can read.",
+    "Turn Word documents, slide decks, spreadsheets, PDFs, Markdown, text, and images into the file you need. Uploads go straight to private storage, and every run returns a ticket you can read.",
   robots: {
     index: false,
     follow: false,
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Graphia — document conversion, privately run",
     description:
-      "A private press for everyday documents. Five modes, direct uploads, and a ticket you can read.",
+      "A private press for everyday documents. Ten modes, direct uploads, and a ticket you can read.",
     type: "website",
   },
 };

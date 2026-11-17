@@ -7,9 +7,13 @@ import subprocess
 import uuid
 from pathlib import Path
 
+import pymupdf
+
 from converters.base import ConversionError
 
 logger = logging.getLogger(__name__)
+
+MAX_OUTPUT_PAGES = 500
 
 
 def resolve_soffice(soffice_bin: str) -> Path | None:
@@ -104,5 +108,15 @@ def convert_to_pdf(
     with expected.open("rb") as handle:
         if handle.read(5) != b"%PDF-":
             raise ConversionError("LibreOffice produced an invalid PDF.")
+
+    try:
+        with pymupdf.open(expected) as document:
+            page_count = document.page_count
+    except Exception as exc:
+        raise ConversionError("LibreOffice produced an invalid PDF.") from exc
+    if page_count > MAX_OUTPUT_PAGES:
+        raise ConversionError(
+            f"This document produced more than {MAX_OUTPUT_PAGES} PDF pages."
+        )
 
     return expected

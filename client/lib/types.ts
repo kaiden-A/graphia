@@ -1,9 +1,5 @@
-export type OperationId =
-  | "docx_to_pdf"
-  | "pdf_to_markdown"
-  | "txt_to_markdown"
-  | "markdown_to_pdf"
-  | "images_to_pdf";
+// Operation ids come from the API, so new modes need no client edit.
+export type OperationId = string;
 
 export type JobStatus = "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
 

@@ -4,11 +4,7 @@ import { Check } from "@phosphor-icons/react";
 
 import type { Operation, OperationId } from "@/lib/types";
 
-const FORMATS: Record<OperationId, [string, string]> = {
-  docx_to_pdf: ["DOCX", "PDF"],
-  pdf_to_markdown: ["PDF", "MD"],
-  txt_to_markdown: ["TXT", "MD"],
-  markdown_to_pdf: ["MD", "PDF"],
+const FORMATS: Partial<Record<OperationId, [string, string]>> = {
   images_to_pdf: ["IMG", "PDF"],
 };
 
@@ -25,7 +21,10 @@ export default function OperationPicker({ operations, value, extension, onChange
       {operations.map((operation) => {
         const compatible = !extension || operation.inputExtensions.includes(extension);
         const selected = value === operation.id;
-        const [source, target] = FORMATS[operation.id];
+        const [source, target] = FORMATS[operation.id] ?? [
+          operation.inputExtensions[0]?.toUpperCase() ?? "",
+          operation.outputExtension.toUpperCase(),
+        ];
         return (
           <button
             key={operation.id}

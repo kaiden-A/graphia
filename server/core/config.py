@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     processor_max_workers: int = 1
     conversion_timeout_seconds: int = 300
     soffice_bin: str = "soffice"
+    ghostscript_bin: str = "gs"
 
     @property
     def is_production(self) -> bool:

@@ -8,7 +8,7 @@ import TaglineReveal from "@/components/brand/TaglineReveal";
 export const metadata: Metadata = {
   title: "Graphia — document conversion, privately run",
   description:
-    "Turn DOCX, PDF, Markdown, text, and images into the file you need. Uploads go straight to private storage, and every run returns a ticket you can read.",
+    "Turn Word documents, slide decks, spreadsheets, PDFs, Markdown, text, and images into the file you need. Uploads go straight to private storage, and every run returns a ticket you can read.",
 };
 
 const FORMATS = [
@@ -19,16 +19,22 @@ const FORMATS = [
     inputs: ".docx",
   },
   {
-    from: "PDF",
-    to: "MD",
-    note: "Selectable text comes out page by page as Markdown.",
-    inputs: ".pdf",
+    from: "PPTX",
+    to: "PDF",
+    note: "A slide deck becomes a PDF handout.",
+    inputs: ".pptx",
   },
   {
-    from: "TXT",
-    to: "MD",
-    note: "Plain text becomes clean Markdown paragraphs.",
-    inputs: ".txt",
+    from: "XLSX",
+    to: "PDF",
+    note: "A workbook is laid out as a paginated PDF.",
+    inputs: ".xlsx",
+  },
+  {
+    from: "IMG",
+    to: "PDF",
+    note: "One image is placed on a single PDF page.",
+    inputs: ".png .jpg .webp .gif .bmp .tif",
   },
   {
     from: "MD",
@@ -37,10 +43,34 @@ const FORMATS = [
     inputs: ".md .markdown",
   },
   {
-    from: "IMG",
+    from: "PDF",
+    to: "MD",
+    note: "Selectable text comes out page by page as Markdown.",
+    inputs: ".pdf",
+  },
+  {
+    from: "PDF",
+    to: "TXT",
+    note: "Selectable text comes out as one plain text file.",
+    inputs: ".pdf",
+  },
+  {
+    from: "PDF",
     to: "PDF",
-    note: "One image is placed on a single PDF page.",
-    inputs: ".png .jpg .webp .gif .bmp .tif",
+    note: "A shared copy with lighter images and a smaller file.",
+    inputs: ".pdf",
+  },
+  {
+    from: "DOCX",
+    to: "MD",
+    note: "Headings, lists, and tables become Markdown. Images are omitted.",
+    inputs: ".docx",
+  },
+  {
+    from: "TXT",
+    to: "MD",
+    note: "Plain text becomes clean Markdown paragraphs.",
+    inputs: ".txt",
   },
 ];
 
@@ -97,7 +127,7 @@ const FAQS = [
   {
     question: "What can I convert?",
     answer:
-      "Five modes: DOCX to PDF, PDF to Markdown, text to Markdown, Markdown to PDF, and image to PDF.",
+      "Word documents, slide decks, spreadsheets, PDFs, Markdown, text, and images — in the direction shown in the converter. PDFs can also be turned into plain text or made smaller.",
   },
   {
     question: "How large can a file be?",
@@ -175,8 +205,9 @@ export default function LandingPage() {
               A private press for everyday documents.
             </h1>
             <p className="landing-lede body-2">
-              Turn DOCX, PDF, Markdown, text, and images into the file you need. Uploads go
-              straight to private storage, and every run returns a ticket you can read.
+              Turn Word documents, slide decks, spreadsheets, PDFs, Markdown, text, and images
+              into the file you need. Uploads go straight to private storage, and every run
+              returns a ticket you can read.
             </p>
             <div className="landing-cta-row">
               <Link className="btn btn-primary btn-large" href="/convert">
@@ -189,7 +220,7 @@ export default function LandingPage() {
             </div>
             <ul className="landing-proof caption-4">
               <li>25 MB per file</li>
-              <li>5 modes</li>
+              <li>10 modes</li>
               <li>Files expire in 24 hours</li>
             </ul>
           </div>
@@ -253,7 +284,7 @@ export default function LandingPage() {
                 <span className="eyebrow-index">01</span>The formats
               </p>
               <h2 id="formats-title" className="heading-3">
-                Five modes. Nothing to configure.
+                Ten modes. Nothing to configure.
               </h2>
             </div>
             <p className="section-note body-5">

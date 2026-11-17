@@ -21,6 +21,9 @@ ENV PYTHONUNBUFFERED=1 \
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
+        ghostscript \
+        libreoffice-calc \
+        libreoffice-impress \
         libreoffice-writer \
         fonts-liberation \
         fonts-dejavu-core \

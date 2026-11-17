@@ -14,6 +14,7 @@ class ConversionContext:
     original_filename: str
     timeout_seconds: int
     soffice_bin: str
+    ghostscript_bin: str
 
 
 @dataclass(frozen=True)

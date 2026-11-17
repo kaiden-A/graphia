@@ -156,6 +156,7 @@ def run_job(
                 original_filename=job.original_filename,
                 timeout_seconds=settings.conversion_timeout_seconds,
                 soffice_bin=settings.soffice_bin,
+                ghostscript_bin=settings.ghostscript_bin,
             )
             result = converter(input_path, context)
             if not result.path.exists() or result.path.stat().st_size <= 0:

@@ -293,10 +293,15 @@ def make_job(
         job_id = __import__("uuid").uuid4()
         ext = {
             ConversionOperation.DOCX_TO_PDF: "docx",
-            ConversionOperation.PDF_TO_MARKDOWN: "pdf",
-            ConversionOperation.TXT_TO_MARKDOWN: "txt",
-            ConversionOperation.MARKDOWN_TO_PDF: "md",
+            ConversionOperation.PPTX_TO_PDF: "pptx",
+            ConversionOperation.XLSX_TO_PDF: "xlsx",
             ConversionOperation.IMAGES_TO_PDF: "png",
+            ConversionOperation.MARKDOWN_TO_PDF: "md",
+            ConversionOperation.PDF_TO_MARKDOWN: "pdf",
+            ConversionOperation.PDF_TO_TEXT: "pdf",
+            ConversionOperation.COMPRESS_PDF: "pdf",
+            ConversionOperation.DOCX_TO_MARKDOWN: "docx",
+            ConversionOperation.TXT_TO_MARKDOWN: "txt",
         }[operation]
         now = utcnow()
         job = ConversionJob(

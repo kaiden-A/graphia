@@ -9,20 +9,31 @@ updating job state.
 | Operation | Input | Output | Engine |
 |---|---|---|---|
 | `docx_to_pdf` | `.docx` | PDF | LibreOffice headless |
-| `pdf_to_markdown` | `.pdf` (selectable text) | Markdown | PyMuPDF + pypdf |
+| `pptx_to_pdf` | `.pptx` | PDF | LibreOffice headless |
+| `xlsx_to_pdf` | `.xlsx` | PDF | LibreOffice headless |
+| `pdf_to_markdown` | `.pdf` (selectable text) | Markdown | PyMuPDF |
+| `pdf_to_text` | `.pdf` (selectable text) | Text | PyMuPDF |
+| `docx_to_markdown` | `.docx` | Markdown | mammoth + markdownify |
 | `txt_to_markdown` | `.txt` | Markdown | stdlib + charset-normalizer |
 | `markdown_to_pdf` | `.md`, `.markdown` | PDF | Python-Markdown → HTML → LibreOffice |
 | `images_to_pdf` | PNG/JPEG/WebP/GIF/BMP/TIFF | PDF | Pillow |
+| `compress_pdf` | `.pdf` | PDF | Ghostscript |
 
 ## Limits
 
 - 25 MB per input file.
 - 200 MB per output file.
-- 500 PDF pages.
+- 500 PDF pages for PDF inputs and for any LibreOffice render.
+- 200 slides per PPTX.
 - 50 MP / 10,000 px maximum image.
-- 300 second LibreOffice subprocess timeout.
-- One DOCX is checked for zip bombs before conversion.
+- 300 second LibreOffice and Ghostscript subprocess timeout.
+- DOCX, PPTX, and XLSX inputs are checked for zip bombs before conversion.
 - Text files must be UTF-8 or Windows-1252.
+- DOCX to Markdown drops images. The output is one Markdown file, so images are
+  not inlined or packaged alongside it.
+- Compress PDF uses the Ghostscript `/ebook` preset and returns the original file
+  when the result would be larger. The output is named
+  `<stem>-compressed.pdf`.
 
 ## Error messages
 
@@ -32,7 +43,12 @@ ticket. They should be short and actionable:
 - “This PDF has no selectable text. Scanned PDFs need OCR, which is not supported yet.”
 - “This PDF is password-protected. Remove the password and try again.”
 - “This file is not a valid DOCX document.”
+- “This file is not a valid PPTX presentation.”
+- “This file is not a valid XLSX workbook.”
+- “This presentation has more than 200 slides.”
+- “This document produced more than 500 PDF pages.”
 - “LibreOffice is not installed on the conversion server.”
+- “Ghostscript is not installed on the conversion server.”
 
 Unexpected exceptions are logged with the job ID and displayed as a generic
 message, never a traceback.
@@ -50,8 +66,9 @@ message, never a traceback.
 
 ## Local LibreOffice
 
-DOCX to PDF and Markdown to PDF run LibreOffice headless. The processor image
-installs it at build time (`libreoffice-writer` plus Liberation, Carlito, and
+DOCX to PDF, PPTX to PDF, XLSX to PDF, and Markdown to PDF run LibreOffice
+headless. The processor image installs it at build time (`libreoffice-writer`,
+`libreoffice-impress`, and `libreoffice-calc` plus Liberation, Carlito, and
 Caladea fonts) and fails the build if `soffice --version` does not answer. Local
 development does not use that image, so the engine must be installed once on the
 host.
@@ -84,5 +101,36 @@ processor logs the resolved binary on boot and `GET /` reports
 LibreOffice profile.
 
 Unit tests read `settings.soffice_bin`, so an absolute path is enough. When the
-binary is missing, the DOCX test skips and every PDF producing run fails with
+binary is missing, the Office tests skip and every PDF producing run fails with
 “LibreOffice is not installed on the conversion server.”
+
+## Local Ghostscript
+
+Compress PDF runs Ghostscript. The processor image installs it at build time;
+local development needs it only for that operation.
+
+Windows:
+
+```powershell
+winget install --id ArtifexSoftware.GhostScript -e
+```
+
+If the package is unavailable, install the official build from
+<https://ghostscript.com/releases/>. Then point the processor at the console
+binary in `server/.env`:
+
+```dotenv
+GHOSTSCRIPT_BIN=C:/Program Files/gs/gs10.05.1/bin/gswin64c.exe
+```
+
+On Linux the default `gs` works when it is on `PATH`. Verify both the binary and
+the setting:
+
+```powershell
+& "C:\Program Files\gs\gs10.05.1\bin\gswin64c.exe" --version
+uv run --directory server python -c "from core.config import settings; from converters.ghostscript import ghostscript_available; print(settings.ghostscript_bin, ghostscript_available(settings.ghostscript_bin))"
+```
+
+Restart the processor after changing `.env`. `GET /` reports
+`{"ghostscript": true}` when the binary resolves, and the Compress test skips
+when it does not.

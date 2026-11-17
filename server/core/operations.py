@@ -26,6 +26,7 @@ class OperationSpec:
     input_extensions: tuple[str, ...]
     output_extension: str
     output_media_type: str
+    output_suffix: str = ""
 
 
 OPERATIONS: dict[ConversionOperation, OperationSpec] = {
@@ -37,27 +38,19 @@ OPERATIONS: dict[ConversionOperation, OperationSpec] = {
         output_extension="pdf",
         output_media_type="application/pdf",
     ),
-    ConversionOperation.PDF_TO_MARKDOWN: OperationSpec(
-        id=ConversionOperation.PDF_TO_MARKDOWN,
-        label="PDF to Markdown",
-        description="Extract selectable text from a PDF, page by page.",
-        input_extensions=("pdf",),
-        output_extension="md",
-        output_media_type="text/markdown",
+    ConversionOperation.PPTX_TO_PDF: OperationSpec(
+        id=ConversionOperation.PPTX_TO_PDF,
+        label="PPTX to PDF",
+        description="Turn a slide deck into a PDF handout.",
+        input_extensions=("pptx",),
+        output_extension="pdf",
+        output_media_type="application/pdf",
     ),
-    ConversionOperation.TXT_TO_MARKDOWN: OperationSpec(
-        id=ConversionOperation.TXT_TO_MARKDOWN,
-        label="Text to Markdown",
-        description="Turn a plain text file into clean Markdown paragraphs.",
-        input_extensions=("txt",),
-        output_extension="md",
-        output_media_type="text/markdown",
-    ),
-    ConversionOperation.MARKDOWN_TO_PDF: OperationSpec(
-        id=ConversionOperation.MARKDOWN_TO_PDF,
-        label="Markdown to PDF",
-        description="Render Markdown as a styled PDF document.",
-        input_extensions=("md", "markdown"),
+    ConversionOperation.XLSX_TO_PDF: OperationSpec(
+        id=ConversionOperation.XLSX_TO_PDF,
+        label="XLSX to PDF",
+        description="Lay out a workbook as a paginated PDF.",
+        input_extensions=("xlsx",),
         output_extension="pdf",
         output_media_type="application/pdf",
     ),
@@ -68,6 +61,55 @@ OPERATIONS: dict[ConversionOperation, OperationSpec] = {
         input_extensions=IMAGE_EXTENSIONS,
         output_extension="pdf",
         output_media_type="application/pdf",
+    ),
+    ConversionOperation.MARKDOWN_TO_PDF: OperationSpec(
+        id=ConversionOperation.MARKDOWN_TO_PDF,
+        label="Markdown to PDF",
+        description="Render Markdown as a styled PDF document.",
+        input_extensions=("md", "markdown"),
+        output_extension="pdf",
+        output_media_type="application/pdf",
+    ),
+    ConversionOperation.PDF_TO_MARKDOWN: OperationSpec(
+        id=ConversionOperation.PDF_TO_MARKDOWN,
+        label="PDF to Markdown",
+        description="Extract selectable text from a PDF, page by page.",
+        input_extensions=("pdf",),
+        output_extension="md",
+        output_media_type="text/markdown",
+    ),
+    ConversionOperation.PDF_TO_TEXT: OperationSpec(
+        id=ConversionOperation.PDF_TO_TEXT,
+        label="PDF to Text",
+        description="Extract selectable text from a PDF as plain text.",
+        input_extensions=("pdf",),
+        output_extension="txt",
+        output_media_type="text/plain",
+    ),
+    ConversionOperation.COMPRESS_PDF: OperationSpec(
+        id=ConversionOperation.COMPRESS_PDF,
+        label="Compress PDF",
+        description="Shrink a PDF for sharing while keeping the text readable.",
+        input_extensions=("pdf",),
+        output_extension="pdf",
+        output_media_type="application/pdf",
+        output_suffix="-compressed",
+    ),
+    ConversionOperation.DOCX_TO_MARKDOWN: OperationSpec(
+        id=ConversionOperation.DOCX_TO_MARKDOWN,
+        label="DOCX to Markdown",
+        description="Turn a Word document into clean Markdown. Images are omitted.",
+        input_extensions=("docx",),
+        output_extension="md",
+        output_media_type="text/markdown",
+    ),
+    ConversionOperation.TXT_TO_MARKDOWN: OperationSpec(
+        id=ConversionOperation.TXT_TO_MARKDOWN,
+        label="Text to Markdown",
+        description="Turn a plain text file into clean Markdown paragraphs.",
+        input_extensions=("txt",),
+        output_extension="md",
+        output_media_type="text/markdown",
     ),
 }
 
@@ -84,6 +126,8 @@ def canonical_content_type(operation: ConversionOperation, filename: str) -> str
     ext = file_extension(filename)
     mapping = {
         "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "pdf": "application/pdf",
         "txt": "text/plain",
         "md": "text/markdown",
@@ -152,9 +196,18 @@ def validate_upload_metadata(
 def prefix_matches(operation: ConversionOperation, filename: str, prefix: bytes) -> bool:
     """Cheap first-bytes check performed by Service A after the direct upload."""
     ext = file_extension(filename)
-    if operation is ConversionOperation.DOCX_TO_PDF:
+    if operation in {
+        ConversionOperation.DOCX_TO_PDF,
+        ConversionOperation.DOCX_TO_MARKDOWN,
+        ConversionOperation.PPTX_TO_PDF,
+        ConversionOperation.XLSX_TO_PDF,
+    }:
         return prefix.startswith((b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08"))
-    if operation is ConversionOperation.PDF_TO_MARKDOWN:
+    if operation in {
+        ConversionOperation.PDF_TO_MARKDOWN,
+        ConversionOperation.PDF_TO_TEXT,
+        ConversionOperation.COMPRESS_PDF,
+    }:
         return prefix.startswith(b"%PDF-")
     if operation is ConversionOperation.TXT_TO_MARKDOWN:
         return b"\x00" not in prefix
@@ -179,4 +232,4 @@ def prefix_matches(operation: ConversionOperation, filename: str, prefix: bytes)
 
 def output_filename(original_filename: str, operation: ConversionOperation) -> str:
     spec = get_spec(operation)
-    return f"{filename_stem(original_filename)}.{spec.output_extension}"
+    return f"{filename_stem(original_filename)}{spec.output_suffix}.{spec.output_extension}"
