@@ -14,7 +14,10 @@ def trigger(job_id: uuid.UUID) -> tuple[bool, str | None]:
     """Ask Service B to accept a job. This waits only for the 202 handshake."""
     url = f"{settings.processor_url.rstrip('/')}/internal/process"
     try:
-        with httpx.Client(timeout=httpx.Timeout(10.0, connect=5.0)) as client:
+        # Cloud Run scales to zero, so the first trigger after idle waits for a
+        # cold start (LibreOffice image, ~10s). The request returns as soon as
+        # the processor accepts the job; it does not wait for the conversion.
+        with httpx.Client(timeout=httpx.Timeout(30.0, connect=10.0)) as client:
             response = client.post(
                 url,
                 json={"jobId": str(job_id)},

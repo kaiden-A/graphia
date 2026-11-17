@@ -101,6 +101,10 @@ jobs:
           # Keep --allow-unauthenticated while processor_client.py authenticates
           # only with X-Internal-Token. If the client starts sending a Google ID
           # token, switch this to --no-allow-unauthenticated in the same change.
+          #
+          # The processor returns 202 before the conversion finishes. Cloud Run
+          # must keep CPU allocated after that response, or LibreOffice and the
+          # pure-Python converters are throttled to a crawl and time out.
           for attempt in 1 2 3 4; do
             if gcloud run deploy "$PROCESSOR_SERVICE" \
               --project "${{ steps.auth.outputs.project_id }}" \
@@ -109,9 +113,11 @@ jobs:
               --image "$IMAGE" \
               --allow-unauthenticated \
               --no-cpu-throttling \
-              --concurrency 1 \
-              --max-instances 1 \
+              --cpu 1 \
               --memory 2Gi \
+              --concurrency 1 \
+              --min-instances 0 \
+              --max-instances 1 \
               --quiet; then
               exit 0
             fi

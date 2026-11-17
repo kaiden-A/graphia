@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import threading
 
+from sqlalchemy import event
+
+from converters.base import ConversionResult
 from core.models.conversion_job import ConversionJob
 from core.models.enums import ConversionOperation, JobStatus
 from processor.runner import run_job
@@ -95,6 +98,49 @@ def test_runner_completes_txt_job(db, fake_storage):
         data, content_type = fake_storage.objects[refreshed.output_key]
         assert b"First paragraph." in data
         assert content_type == "text/markdown"
+    finally:
+        session.close()
+
+
+def test_runner_releases_db_connection_during_conversion(db, fake_storage):
+    user = create_user(db)
+    job = make_job(
+        db,
+        owner=user,
+        operation=ConversionOperation.TXT_TO_MARKDOWN,
+        status=JobStatus.PROCESSING,
+    )
+    fake_storage.seed(job.input_key, b"hello", "text/plain")
+    active_connections = [0]
+    checked_out: list[int] = []
+
+    @event.listens_for(db.engine, "checkout")
+    def _checkout(*_args):
+        active_connections[0] += 1
+
+    @event.listens_for(db.engine, "checkin")
+    def _checkin(*_args):
+        active_connections[0] -= 1
+
+    def converter(_input_path, context):
+        # A long conversion must not sit on a checked-out DB connection: Neon
+        # closes idle connections and the completion update would fail.
+        checked_out.append(active_connections[0])
+        output = context.workdir / "result.md"
+        output.write_text("hello", encoding="utf-8")
+        return ConversionResult(path=output, media_type="text/markdown", extension="md")
+
+    run_job(
+        job.id,
+        session_factory=db.session_factory,
+        storage=fake_storage,
+        converters={ConversionOperation.TXT_TO_MARKDOWN: converter},
+    )
+
+    assert checked_out == [0]
+    session = db.session_factory()
+    try:
+        assert session.get(ConversionJob, job.id).status is JobStatus.COMPLETED
     finally:
         session.close()
 

@@ -108,6 +108,10 @@ gcloud run deploy graphia-processor `
   --memory 2Gi
 ```
 
+A deploy from the Cloud Console uses Cloud Run's defaults (CPU throttled,
+512 MiB, concurrency 80) and makes conversions crawl, because the work runs
+after the `202` response. Use the CD workflow or the flags above.
+
 The future Cloud Tasks migration removes the need for CPU always allocated.
 
 ## Migrations
