@@ -12,7 +12,8 @@ import tomli_w
 
 from graphia_cli.errors import UsageError
 
-DEFAULT_SERVER = "http://localhost:3000"
+DEFAULT_SERVER = "https://elysiaa-graphia-api-1023333674013.asia-southeast1.run.app"
+LOCAL_SERVER = "http://localhost:3000"
 CONFIG_FILENAME = "config.toml"
 
 
@@ -61,7 +62,7 @@ def default_config_dir(env: Mapping[str, str] | None = None) -> Path:
     override = (values.get("GRAPHIA_CONFIG_DIR") or "").strip()
     if override:
         return Path(override).expanduser()
-    return Path(platformdirs.user_config_dir("graphia"))
+    return Path(platformdirs.user_config_dir("graphia", appauthor=False))
 
 
 def load_saved_server(path: Path) -> str | None:

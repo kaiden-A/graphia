@@ -13,6 +13,9 @@ approve terminal access.
 uv tool install graphia
 ```
 
+The default server is the deployed Graphia API at
+`https://elysiaa-graphia-api-1023333674013.asia-southeast1.run.app`.
+
 During development:
 
 ```powershell
@@ -21,6 +24,12 @@ uv run --directory cli graphia --help
 ```
 
 ## Sign in
+
+```powershell
+graphia login
+```
+
+For local development:
 
 ```powershell
 graphia login --server http://localhost:3000
@@ -39,6 +48,31 @@ server session.
 
 The approval request expires after 10 minutes and can be used once. A shared
 approval URL is not enough to mint a token without the CLI's verifier.
+
+The approval URL is built by the API from `PUBLIC_BASE_URL`. That must be the
+deployed **client** origin, because the Cloud Run API serves `/api/*` but not the
+`/cli` page. If the API still reports `http://localhost:3000`, fix
+`PUBLIC_BASE_URL` and redeploy the API. If you are deliberately running the
+client locally against the deployed API, pass `--allow-local-approval`.
+
+### Local client against the deployed API
+
+If the API is deployed but the client is not, run the Next client locally
+against the deployed API and approve through localhost:
+
+```dotenv
+# client/.env.local
+API_ORIGIN=https://elysiaa-graphia-api-1023333674013.asia-southeast1.run.app
+```
+
+```powershell
+npm --prefix client run dev
+graphia login --allow-local-approval
+```
+
+The local `/cli` page calls the deployed API through the local Next rewrite, and
+the API's current `PUBLIC_BASE_URL=http://localhost:3000` matches. The Zitadel
+app must have `http://localhost:3000/api/auth/callback` registered.
 
 ## Convert
 
@@ -119,10 +153,12 @@ Resolution order:
 1. `--server`
 2. `GRAPHIA_SERVER`
 3. the saved config file (`graphia doctor` prints the path)
-4. `http://localhost:3000`
+4. the deployed API
+   (`https://elysiaa-graphia-api-1023333674013.asia-southeast1.run.app`)
 
-`graphia login` saves the server after a successful approval.
-`GRAPHIA_CONFIG_DIR` overrides the config directory.
+For local development use `--server http://localhost:3000` or
+`GRAPHIA_SERVER=http://localhost:3000`. `graphia login` saves the server after a
+successful approval. `GRAPHIA_CONFIG_DIR` overrides the config directory.
 
 ## Commands
 
@@ -210,6 +246,11 @@ uv run --isolated --with .\cli\dist\graphia-0.1.0-py3-none-any.whl graphia --ver
   the CLI. Deploy the current API and run the new migration.
 - **`Single sign-on is not configured`** Set `ZITADEL_ISSUER` and
   `ZITADEL_CLIENT_ID` on the API; the CLI reuses the browser login.
+- **The approval page opens `http://localhost:3000`** The API's
+  `PUBLIC_BASE_URL` is still the local default. Set it to the deployed client
+  origin, register the matching Zitadel redirect URI, and redeploy the API. If
+  the client is intentionally running locally against the deployed API, pass
+  `--allow-local-approval`.
 - **`Not signed in`** Run `graphia login`, or pass `--server` for the right host.
 - **`Your session has expired`** The 30-day session ended or was revoked. Run
   `graphia login` again.

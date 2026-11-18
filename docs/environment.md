@@ -125,13 +125,17 @@ server environment file. These variables are optional overrides:
 
 | Variable | Purpose |
 |---|---|
-| `GRAPHIA_SERVER` | Site origin, for example `https://graphia.app`. |
+| `GRAPHIA_SERVER` | API or site origin. Defaults to the deployed API. |
 | `GRAPHIA_TOKEN` | Session token; overrides the keychain/file store. |
 | `GRAPHIA_CONFIG_DIR` | Config and credentials directory. |
 | `GRAPHIA_NO_KEYRING` | Set to `1` to force the `0600` credentials file. |
 
 Resolution order for the server is `--server`, `GRAPHIA_SERVER`, the saved
-config file, then `http://localhost:3000`. See `docs/cli.md`.
+config file, then the deployed API
+(`https://elysiaa-graphia-api-1023333674013.asia-southeast1.run.app`). For local
+development, use `--server http://localhost:3000`. The approval page itself is
+built from `PUBLIC_BASE_URL`, so that API value must be the deployed client
+origin. See `docs/cli.md`.
 
 ## Local/test-only variables
 

@@ -138,6 +138,50 @@ def test_login_waits_for_approval_and_stores_token(runtime: Runtime):
     assert auth.load_token(runtime).token == "session-token"
 
 
+def test_login_rejects_a_local_approval_page_on_a_remote_api(runtime: Runtime):
+    local_config = {**CONFIG, "webUrl": "http://localhost:3000"}
+
+    with respx.mock(assert_all_called=True) as router:
+        router.get("https://graphia.test/api/config").mock(
+            return_value=httpx.Response(200, json=local_config)
+        )
+
+        with pytest.raises(AuthError, match="PUBLIC_BASE_URL"):
+            auth.login(
+                runtime,
+                no_browser=True,
+                sleep=lambda _seconds: None,
+                echo=lambda _line: None,
+            )
+
+
+def test_login_allows_local_approval_with_opt_in(runtime: Runtime):
+    echoed: list[str] = []
+    local_config = {**CONFIG, "webUrl": "http://localhost:3000"}
+
+    with respx.mock(assert_all_called=True) as router:
+        router.get("https://graphia.test/api/config").mock(
+            return_value=httpx.Response(200, json=local_config)
+        )
+        router.post("https://graphia.test/api/cli/requests").mock(
+            return_value=_create_response()
+        )
+        router.post("https://graphia.test/api/cli/token").mock(
+            return_value=_token_response()
+        )
+
+        stored, _user = auth.login(
+            runtime,
+            no_browser=True,
+            allow_local_approval=True,
+            sleep=lambda _seconds: None,
+            echo=echoed.append,
+        )
+
+    assert stored.token == "session-token"
+    assert any("Using the local approval page" in line for line in echoed)
+
+
 def test_login_can_skip_the_browser(runtime: Runtime):
     opened: list[str] = []
     with respx.mock(assert_all_called=True) as router:

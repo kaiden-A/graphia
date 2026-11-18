@@ -141,6 +141,11 @@ SESSION_COOKIE_NAME=graphia_session
 Set `COOKIE_SECURE=true` on the API in production. The Zitadel redirect and
 post-logout URIs must use the public client origin, not `API_ORIGIN`.
 
+The CLI defaults to the deployed API origin
+(`https://elysiaa-graphia-api-1023333674013.asia-southeast1.run.app`), but its
+`graphia login` approval link is built from `PUBLIC_BASE_URL`. Set that to the
+deployed client origin; the API does not serve `/cli`.
+
 If the client is on **Firebase Hosting** and `/api` is proxied through a
 Firebase rewrite, Firebase strips every cookie except `__session`. In that case
 set `SESSION_COOKIE_NAME=__session` on both the API and the client, and use

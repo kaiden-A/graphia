@@ -63,11 +63,15 @@ The CLI converts a single file or scans a folder and mirrors the results:
 
 ```powershell
 uv tool install graphia
-graphia login --server http://localhost:3000
+graphia login
 graphia convert .\decks --to pdf
 graphia convert deck.pptx --to pdf
 graphia convert .\documents --to md --out .\markdown
 ```
+
+The default server is the deployed API at
+`https://elysiaa-graphia-api-1023333674013.asia-southeast1.run.app`. For local
+development, use `--server http://localhost:3000`.
 
 It is member-only, uploads directly to R2 with the same presigned PUT flow, and
 stores its session in the OS keychain. See `docs/cli.md` for batch rules,

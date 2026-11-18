@@ -12,6 +12,7 @@ import webbrowser
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import keyring
 
@@ -37,6 +38,11 @@ def create_verifier() -> str:
 def challenge_for(verifier: str) -> str:
     digest = hashlib.sha256(verifier.encode("utf-8")).digest()
     return base64.urlsafe_b64encode(digest).decode().rstrip("=")
+
+
+def is_localhost(url: str) -> bool:
+    host = (urlsplit(url).hostname or "").lower()
+    return host in {"localhost", "127.0.0.1", "::1"}
 
 
 def device_name() -> str:
@@ -149,6 +155,7 @@ def login(
     *,
     name: str | None = None,
     no_browser: bool = False,
+    allow_local_approval: bool = False,
     open_browser: Callable[[str], object] = webbrowser.open,
     sleep: Callable[[float], None] = time.sleep,
     poll_seconds: float = 2.0,
@@ -168,6 +175,19 @@ def login(
             raise
         if config.auth_mode != "browser-approval":
             raise AuthError("This server does not support `graphia login` yet.")
+
+        if is_localhost(config.web_url) and not is_localhost(runtime.server):
+            if not allow_local_approval:
+                raise AuthError(
+                    "The API reports its approval page as "
+                    f"{config.web_url}. Set PUBLIC_BASE_URL on the API to the "
+                    "deployed client origin, or pass --allow-local-approval if "
+                    "the client is running locally against this API."
+                )
+            echo(
+                "Using the local approval page reported by the API: "
+                f"{config.web_url}"
+            )
 
         verifier = create_verifier()
         created = public.json(

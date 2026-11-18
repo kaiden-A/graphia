@@ -62,6 +62,10 @@ create job, PUT to R2 with the presigned URL, complete, poll, download.
   hashed code and a verifier that never leaves the terminal. The exchange mints
   an ordinary `sessions` row with `client=cli`.
 - Tokens live in the OS keychain per host, with a `0600` file fallback.
+- The default server is the deployed API
+  (`https://elysiaa-graphia-api-1023333674013.asia-southeast1.run.app`); local
+  development passes `--server http://localhost:3000`. The approval link comes
+  from `PUBLIC_BASE_URL`, which must be the deployed client origin.
 - Members are throttled per user (120 uploads/hour by default); guests stay on
   the per-IP browser limit and cannot use the CLI.
 - The batch runner keeps up to `MAX_ACTIVE_JOBS_PER_USER` files in flight,

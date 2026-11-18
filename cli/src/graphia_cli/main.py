@@ -75,18 +75,30 @@ def _server_config(client: GraphiaClient) -> api.ConfigInfo:
 
 @app.command()
 def login(
-    server: str | None = typer.Option(None, "--server", "-s", help="Graphia site URL."),
+    server: str | None = typer.Option(
+        None, "--server", "-s", help="Graphia server URL (API or site)."
+    ),
     name: str | None = typer.Option(None, "--name", help="Device name shown in the browser."),
     no_browser: bool = typer.Option(
         False,
         "--no-browser",
         help="Print the approval URL instead of opening a browser.",
     ),
+    allow_local_approval: bool = typer.Option(
+        False,
+        "--allow-local-approval",
+        help="Allow the localhost approval page a remote API may report.",
+    ),
 ) -> None:
     """Sign in by approving this terminal in a browser."""
     runtime = _runtime(server)
     try:
-        stored, user = auth.login(runtime, name=name, no_browser=no_browser)
+        stored, user = auth.login(
+            runtime,
+            name=name,
+            no_browser=no_browser,
+            allow_local_approval=allow_local_approval,
+        )
         if user.is_guest:
             raise AuthError("The CLI requires a member account.")
     except GraphiaError as exc:
@@ -110,7 +122,9 @@ def login(
 
 @app.command()
 def logout(
-    server: str | None = typer.Option(None, "--server", "-s", help="Graphia site URL."),
+    server: str | None = typer.Option(
+        None, "--server", "-s", help="Graphia server URL (API or site)."
+    ),
 ) -> None:
     """Revoke the stored CLI session."""
     runtime = _runtime(server)
@@ -127,7 +141,9 @@ def logout(
 
 @app.command()
 def whoami(
-    server: str | None = typer.Option(None, "--server", "-s", help="Graphia site URL."),
+    server: str | None = typer.Option(
+        None, "--server", "-s", help="Graphia server URL (API or site)."
+    ),
 ) -> None:
     """Show the signed-in account."""
     runtime = _runtime(server)
@@ -152,7 +168,9 @@ def whoami(
 
 @app.command()
 def doctor(
-    server: str | None = typer.Option(None, "--server", "-s", help="Graphia site URL."),
+    server: str | None = typer.Option(
+        None, "--server", "-s", help="Graphia server URL (API or site)."
+    ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show HTTP requests."),
 ) -> None:
     """Check the server, session, and supported operations."""
@@ -173,6 +191,14 @@ def doctor(
         ) as client:
             config = _server_config(client)
             typer.echo(f"API:    {config.app_name} {config.version}")
+            typer.echo(f"Web:    {config.web_url}")
+            if auth.is_localhost(config.web_url) and not auth.is_localhost(runtime.server):
+                typer.secho(
+                    "        Approval page points at localhost; "
+                    "set PUBLIC_BASE_URL on the API.",
+                    err=True,
+                    fg=typer.colors.YELLOW,
+                )
             typer.echo(
                 f"Limits: {config.max_upload_mb} MB, "
                 f"{config.max_active_jobs} active jobs, "
@@ -203,7 +229,9 @@ def doctor(
 
 @app.command()
 def operations(
-    server: str | None = typer.Option(None, "--server", "-s", help="Graphia site URL."),
+    server: str | None = typer.Option(
+        None, "--server", "-s", help="Graphia server URL (API or site)."
+    ),
     json_output: bool = typer.Option(False, "--json", help="Print JSON."),
 ) -> None:
     """List the conversions this server supports."""
@@ -304,7 +332,9 @@ def _outcome_report(
 @app.command()
 def convert(
     paths: list[Path] = typer.Argument(..., help="Files or folders to convert."),
-    server: str | None = typer.Option(None, "--server", "-s", help="Graphia site URL."),
+    server: str | None = typer.Option(
+        None, "--server", "-s", help="Graphia server URL (API or site)."
+    ),
     to: str | None = typer.Option(
         None,
         "--to",

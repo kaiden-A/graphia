@@ -4,9 +4,13 @@ Batch document conversion from the terminal, powered by a Graphia server.
 
 ```powershell
 uv tool install graphia
-graphia login --server http://localhost:3000
+graphia login
 graphia convert .\decks --to pdf
 ```
+
+The default server is the deployed Graphia API at
+`https://elysiaa-graphia-api-1023333674013.asia-southeast1.run.app`. For local
+development use `--server http://localhost:3000` or `GRAPHIA_SERVER`.
 
 ## Commands
 
@@ -61,7 +65,9 @@ Exit codes: `0` success, `1` one or more files failed or the plan has errors,
 The CLI is member-only. `graphia login` opens a Graphia page where you approve
 the terminal; a one-time code plus a local verifier is exchanged for a normal
 server session. No password is typed in the terminal and no token appears in
-the browser.
+the browser. The approval page URL comes from the API's `PUBLIC_BASE_URL`; it
+must be the deployed client origin, not the Cloud Run API origin. If the client
+is intentionally local while the API is remote, add `--allow-local-approval`.
 
 Tokens are stored per server host in the OS keychain. If the keychain is
 unavailable, Graphia falls back to a `0600` credentials file. Set
@@ -75,10 +81,11 @@ Resolution order:
 1. `--server`
 2. `GRAPHIA_SERVER`
 3. the saved config file (`graphia doctor` prints its path)
-4. `http://localhost:3000`
+4. the deployed API (`https://elysiaa-graphia-api-1023333674013.asia-southeast1.run.app`)
 
-`graphia login` saves the server after a successful approval. `GRAPHIA_CONFIG_DIR`
-overrides the config directory.
+For local development use `--server http://localhost:3000` or set
+`GRAPHIA_SERVER=http://localhost:3000`. `graphia login` saves the server after a
+successful approval. `GRAPHIA_CONFIG_DIR` overrides the config directory.
 
 ## Notes
 

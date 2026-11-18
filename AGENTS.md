@@ -62,6 +62,11 @@ scrapbook, the Greek journal, or gradient-heavy backgrounds.
 - CLI approval codes and verifiers are stored only as hashes. Requests are
   single-use, expire in `CLI_AUTH_REQUEST_TTL_MINUTES`, and are bound to the
   verifier. Never log a raw code, token, or presigned URL.
+- The CLI defaults to the deployed API
+  (`https://elysiaa-graphia-api-1023333674013.asia-southeast1.run.app`); local
+  development uses `--server http://localhost:3000`. `PUBLIC_BASE_URL` must be
+  the deployed client origin because the approval link points at `/cli`, which
+  the API does not serve.
 - Upload throttling is per user for members and per IP for guests. Do not
   re-key guests onto the member limit.
 

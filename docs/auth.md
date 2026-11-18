@@ -122,6 +122,11 @@ Only the code hash, challenge, and session token hash are stored. Codes are
 single-use and expire after 10 minutes. `graphia logout` calls
 `POST /api/cli/logout` with the bearer token and revokes the session.
 
+The CLI defaults to the deployed Cloud Run API
+(`https://elysiaa-graphia-api-1023333674013.asia-southeast1.run.app`). The
+approval link is built from `PUBLIC_BASE_URL`, so that value must be the
+deployed client origin; the API serves `/api/*` but not the `/cli` page.
+
 ## Security checks
 
 - PKCE S256; verifier stays in the signed HttpOnly handshake cookie.
@@ -185,3 +190,7 @@ single-use and expire after 10 minutes. `graphia logout` calls
   host keep separate sessions.
 - **CLI request expired:** approval links last 10 minutes. Run `graphia login`
   again.
+- **CLI approval opens `http://localhost:3000`:** the API's `PUBLIC_BASE_URL` is
+  still the local default. Set it to the deployed client origin and register the
+  matching Zitadel redirect URI. If the client is intentionally local against a
+  remote API, pass `--allow-local-approval`.
