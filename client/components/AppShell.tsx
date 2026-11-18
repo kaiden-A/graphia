@@ -149,6 +149,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="app-footer-inner caption-5">
             <span>Graphia / Document atelier</span>
             <span className="app-footer-links">
+              <Link href="/cli-docs">CLI</Link>
               <Link href="/privacy">Privacy</Link>
               <Link href="/terms">Terms</Link>
             </span>

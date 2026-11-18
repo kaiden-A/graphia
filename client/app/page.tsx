@@ -186,6 +186,7 @@ export default function LandingPage() {
             <a href="#formats">Formats</a>
             <a href="#why">Why this one</a>
             <a href="#how">How it works</a>
+            <Link href="/cli-docs">CLI</Link>
             <a href="#questions">Questions</a>
           </nav>
 
@@ -492,6 +493,7 @@ export default function LandingPage() {
           <nav className="footer-links caption-5" aria-label="Footer">
             <a href="#formats">Formats</a>
             <a href="#how">How it works</a>
+            <Link href="/cli-docs">CLI</Link>
             <a href="#questions">Questions</a>
             <Link href="/privacy">Privacy</Link>
             <Link href="/terms">Terms</Link>

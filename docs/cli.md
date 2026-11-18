@@ -5,7 +5,8 @@ scans a folder, maps each file to an operation, uploads directly to R2, polls th
 job, and writes the result into a mirrored output tree.
 
 The CLI is **member-only**. Guests can use the browser converter, but cannot
-approve terminal access.
+approve terminal access. The public version of this guide is served at
+`/cli-docs`.
 
 ## Install
 
