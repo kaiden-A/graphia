@@ -2255,6 +2255,41 @@ svg {
   text-decoration-color: var(--cobalt);
 }
 
+.cli-details {
+  display: grid;
+  gap: var(--space-75);
+  margin: var(--space-100) 0;
+  padding: var(--space-100) 0;
+  border-block: 1px solid var(--line);
+}
+
+.cli-details > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-100);
+}
+
+.cli-details dt {
+  color: var(--text-muted);
+}
+
+.cli-details dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.cli-actions {
+  display: flex;
+  gap: var(--space-100);
+  margin-top: var(--space-75);
+}
+
+.cli-actions .btn {
+  flex: 1;
+}
+
 /* ============================================================ legal */
 
 .legal-page {

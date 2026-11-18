@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     app_name: str = "Graphia"
+    app_version: str = "0.1.0"
     app_env: str = "development"
     log_level: str = "INFO"
 
@@ -40,12 +41,15 @@ class Settings(BaseSettings):
     max_upload_mb: int = 25
     max_active_jobs_per_user: int = 3
     uploads_per_hour_per_ip: int = 20
+    uploads_per_hour_per_member: int = 120
     guest_sessions_per_hour_per_ip: int = 10
     guest_session_ttl_hours: int = 24
     daily_job_limit: int = 200
     job_expiry_hours: int = 24
     upload_url_ttl_seconds: int = 600
     download_url_ttl_seconds: int = 300
+
+    cli_auth_request_ttl_minutes: int = 10
 
     processor_max_workers: int = 1
     conversion_timeout_seconds: int = 300
@@ -67,6 +71,10 @@ class Settings(BaseSettings):
     @property
     def guest_session_ttl_seconds(self) -> int:
         return self.guest_session_ttl_hours * 60 * 60
+
+    @property
+    def cli_auth_request_ttl_seconds(self) -> int:
+        return self.cli_auth_request_ttl_minutes * 60
 
     @property
     def zitadel_issuer_url(self) -> str:

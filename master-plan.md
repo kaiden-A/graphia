@@ -52,6 +52,21 @@ Cloudflare R2  <--- browser presigned PUT
 9. Images → PDF (Pillow)
 10. Compress PDF (Ghostscript)
 
+## CLI
+
+`cli/` is a Python/Typer client for batch conversion. It scans folders, maps
+files to existing operations, and uses the same upload contract as the browser:
+create job, PUT to R2 with the presigned URL, complete, poll, download.
+
+- Member-only. `graphia login` uses a 10-minute browser approval request with a
+  hashed code and a verifier that never leaves the terminal. The exchange mints
+  an ordinary `sessions` row with `client=cli`.
+- Tokens live in the OS keychain per host, with a `0600` file fallback.
+- Members are throttled per user (120 uploads/hour by default); guests stay on
+  the per-IP browser limit and cannot use the CLI.
+- The batch runner keeps up to `MAX_ACTIVE_JOBS_PER_USER` files in flight,
+  isolates per-file failures, and resumes by skipping completed outputs.
+
 ## Status model
 
 - `PENDING`: row exists; upload may not be complete yet.

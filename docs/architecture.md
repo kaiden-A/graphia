@@ -4,7 +4,7 @@ Graphia has one Next.js client and two FastAPI processes. There is no message
 broker. PostgreSQL is the durable job record; Cloudflare R2 is the file store.
 
 ```text
-Browser
+Browser / CLI
   │  JSON only (metadata, status, download ticket)
   ▼
 Next.js  ──/api rewrite──►  Service A (FastAPI)
@@ -14,10 +14,15 @@ Next.js  ──/api rewrite──►  Service A (FastAPI)
                                ▲
                                │  atomic claim, status updates
                                ▼
-Browser ──PUT/GET────────►  R2  ◄──── Service B (FastAPI)
+Browser / CLI ──PUT/GET──►  R2  ◄──── Service B (FastAPI)
                                │        LibreOffice / PyMuPDF / Pillow / Ghostscript
                                └──────── run_job()
 ```
+
+The CLI is another client of the same contract. It authenticates with a bearer
+token minted by the browser approval flow, but its session is the same
+server-side `sessions` row used by the web cookie. It never talks to Service B
+and never receives an R2 credential.
 
 ## Service A — public API
 

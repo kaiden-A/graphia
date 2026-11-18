@@ -3,10 +3,11 @@
 A small, asynchronous document converter.
 
 - **Client** — Next.js App Router
+- **CLI** — `graphia` (Python/Typer), batch folder conversion
 - **Service A** — FastAPI public API, auth, job records, signed R2 URLs
 - **Service B** — FastAPI internal processor, LibreOffice/PyMuPDF/Pillow/Ghostscript conversions
 - **Database** — Neon PostgreSQL via SQLAlchemy + pg8000
-- **Storage** — Cloudflare R2; files go **directly from the browser to R2** with a presigned PUT URL
+- **Storage** — Cloudflare R2; files go **directly from the browser or CLI to R2** with a presigned PUT URL
 
 ## Quick start
 
@@ -56,12 +57,29 @@ A small, asynchronous document converter.
    `/login` through Zitadel. `/signup` opens the Zitadel registration flow with
    `prompt=create`.
 
+## CLI
+
+The CLI converts a single file or scans a folder and mirrors the results:
+
+```powershell
+uv tool install graphia
+graphia login --server http://localhost:3000
+graphia convert .\decks --to pdf
+graphia convert deck.pptx --to pdf
+graphia convert .\documents --to md --out .\markdown
+```
+
+It is member-only, uploads directly to R2 with the same presigned PUT flow, and
+stores its session in the OS keychain. See `docs/cli.md` for batch rules,
+configuration, limits, and troubleshooting.
+
 ## Tests
 
 Mock unit tests do not need Neon, R2, LibreOffice, or Ghostscript:
 
 ```powershell
 npm run test:unit
+npm run test:cli
 ```
 
 Integration tests are opt-in and require real credentials in `server/.env`:
@@ -115,3 +133,4 @@ are the runtime contract.
 - `docs/storage.md` — R2 keys, CORS, presigned URLs, lifecycle rules.
 - `docs/conversions.md` — operation matrix, limits, adding a converter.
 - `docs/deployment.md` — Docker, Cloud Run, Firebase/Vercel cookie notes.
+- `docs/cli.md` — install, login, batch conversion, limits, and exit codes.

@@ -68,6 +68,7 @@ if (isWindows) {
 }
 
 run("uv", ["sync", "--directory", "server", "--group", "processor"]);
+run("uv", ["sync", "--directory", "cli"]);
 if (isWindows) {
   run("cmd.exe", ["/c", "npm", "--prefix", "client", "install"]);
 } else {

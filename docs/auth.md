@@ -100,6 +100,28 @@ A visitor can convert without an account:
 - Guest sessions expire with the locker. `scripts/cleanup_expired.py` removes
   unclaimed guest users that have no jobs left.
 
+## CLI access
+
+The CLI is member-only and does not use a second OIDC application. It reuses the
+existing Web application through a browser approval handoff:
+
+1. `graphia login` creates a 10-minute request with a random code and a
+   SHA-256 challenge of a verifier that stays in the CLI.
+2. The CLI opens `GET /cli?code=...` on the client origin. The page sends an
+   unauthenticated visitor through the normal Zitadel login and back to `/cli`.
+3. A signed-in member clicks **Approve**. `POST /api/cli/requests/{code}/approve`
+   binds the request to that user. Guests cannot approve.
+4. The CLI polls `POST /api/cli/token` with the code and verifier. A successful
+   exchange creates a normal `sessions` row with `client=cli` and the device name
+   as `label`, then returns the raw token once.
+5. API calls send `Authorization: Bearer <token>`. `require_auth` accepts the
+   browser cookie or a bearer token; a bearer token belonging to a guest is
+   rejected with `403`.
+
+Only the code hash, challenge, and session token hash are stored. Codes are
+single-use and expire after 10 minutes. `graphia logout` calls
+`POST /api/cli/logout` with the bearer token and revokes the session.
+
 ## Security checks
 
 - PKCE S256; verifier stays in the signed HttpOnly handshake cookie.
@@ -112,6 +134,9 @@ A visitor can convert without an account:
 - `email_verified=false` rejected.
 - No Zitadel tokens are stored in the browser or database; only the local
   session token hash is stored.
+- CLI approval codes and verifiers are stored only as hashes. Requests are
+  single-use, expire after `CLI_AUTH_REQUEST_TTL_MINUTES`, and the token
+  exchange is claimed atomically.
 - `next` accepts only local paths.
 - Guest creation checks `Origin` when present and is rate limited per IP.
 - Guest downloads are blocked at the API, not only hidden in the client.
@@ -126,6 +151,13 @@ A visitor can convert without an account:
 | `GET /api/auth/callback` | OIDC callback. |
 | `GET /api/auth/me` | Current local user, including `isGuest`. |
 | `POST /api/auth/logout` | Revoke local session; returns `{ logoutUrl }`. |
+| `GET /api/config` | Public CLI bootstrap: version, web URL, limits. |
+| `POST /api/cli/requests` | Create a hashed, 10-minute CLI approval request. |
+| `GET /api/cli/requests/{code}` | Request name and status for the approval page. |
+| `POST /api/cli/requests/{code}/approve` | Bind a request to a member cookie session. |
+| `POST /api/cli/requests/{code}/deny` | Deny a request before it is claimed. |
+| `POST /api/cli/token` | Exchange code + verifier for a CLI session token. |
+| `POST /api/cli/logout` | Revoke the bearer session. |
 
 ## Troubleshooting
 
@@ -145,3 +177,11 @@ A visitor can convert without an account:
   existing sessions remain valid.
 - **Guest download returns 403:** expected. Sign in or create an account; the
   guest run is claimed by that account during the callback.
+- **CLI approval returns 403:** the page session is a guest, or the browser
+  `Origin` does not match `PUBLIC_BASE_URL`. Sign in with a member account and
+  open the link on the same origin.
+- **CLI says `Not signed in` after login:** the token is stored per host. Check
+  the resolved server with `graphia doctor`; `localhost:3000` and a production
+  host keep separate sessions.
+- **CLI request expired:** approval links last 10 minutes. Run `graphia login`
+  again.

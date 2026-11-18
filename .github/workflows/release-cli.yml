@@ -1,0 +1,69 @@
+# Publish the `graphia` CLI to PyPI.
+#
+# One-time setup on PyPI:
+#   Your projects -> Publishing -> Add a pending publisher
+#   (or graphia -> Publishing -> Add a trusted publisher once it exists)
+#   Publisher: GitHub
+#   Repository: kaiden-A/graphia
+#   Workflow: release-cli.yml
+#   Environment: pypi
+#
+# Or publish manually with an API token:
+#   uv build --directory cli
+#   uv publish --directory cli --token pypi-...
+#
+# Release:
+#   git tag cli-v0.1.0
+#   git push origin cli-v0.1.0
+
+name: Release CLI
+
+on:
+  push:
+    tags:
+      - "cli-v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/graphia
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check the tag matches the package version
+        if: startsWith(github.ref, 'refs/tags/cli-v')
+        shell: bash
+        run: |
+          version="$(uv run --directory cli python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")"
+          test "cli-v${version}" = "${GITHUB_REF_NAME}" || {
+            echo "Tag ${GITHUB_REF_NAME} does not match cli version ${version}"
+            exit 1
+          }
+
+      - name: Test
+        run: uv run --directory cli python -m pytest
+
+      - name: Lint
+        run: uv run --directory cli python -m ruff check .
+
+      - name: Build
+        run: uv build --directory cli
+
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: cli/dist

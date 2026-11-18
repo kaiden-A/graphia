@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from core.config import settings
 from core.models.enums import ConversionOperation, JobStatus
 from tests.conftest import create_user, login_as, make_job, signup
 
@@ -203,3 +204,26 @@ def test_active_job_limit(api_client, db, fake_storage, monkeypatch):
 
     response = api_client.post("/api/conversions", json=_metadata())
     assert response.status_code == 429
+
+
+def test_member_upload_limit_is_per_user(api_client, db, fake_storage, monkeypatch):
+    monkeypatch.setattr("app.routers.conversions_router.get_storage", lambda: fake_storage)
+    monkeypatch.setattr(settings, "uploads_per_hour_per_member", 1)
+    signup(api_client, db, email="member@example.com")
+
+    first = api_client.post("/api/conversions", json=_metadata())
+    assert first.status_code == 201
+    second = api_client.post("/api/conversions", json=_metadata())
+    assert second.status_code == 429
+
+
+def test_guest_upload_limit_is_per_ip(api_client, db, fake_storage, monkeypatch):
+    monkeypatch.setattr("app.routers.conversions_router.get_storage", lambda: fake_storage)
+    monkeypatch.setattr(settings, "uploads_per_hour_per_ip", 1)
+    guest = api_client.post("/api/auth/guest", follow_redirects=False)
+    assert guest.status_code == 303
+
+    first = api_client.post("/api/conversions", json=_metadata())
+    assert first.status_code == 201
+    second = api_client.post("/api/conversions", json=_metadata())
+    assert second.status_code == 429

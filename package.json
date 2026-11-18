@@ -14,8 +14,11 @@
     "test": "uv run --directory server python -m pytest",
     "test:unit": "uv run --directory server python -m pytest -m \"not integration\"",
     "test:integration": "uv run --directory server python -m pytest -m integration",
+    "test:cli": "uv run --directory cli python -m pytest",
     "lint:server": "uv run --directory server python -m ruff check .",
-    "format:server": "uv run --directory server python -m ruff format ."
+    "lint:cli": "uv run --directory cli python -m ruff check .",
+    "format:server": "uv run --directory server python -m ruff format .",
+    "format:cli": "uv run --directory cli python -m ruff format ."
   },
   "devDependencies": {
     "concurrently": "^9.2.1"

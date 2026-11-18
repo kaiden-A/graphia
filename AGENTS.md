@@ -2,11 +2,13 @@
 
 ## Commands
 
-- `npm run setup` — create local env files and install client + server deps.
+- `npm run setup` — create local env files and install client, server, and CLI deps.
 - `npm run dev` — start API (8000), processor (8001), client (3000).
 - `npm run test:unit` — mock unit tests; no cloud services needed.
 - `npm run test:integration` — Neon + R2 round trip; set `RUN_INTEGRATION=1`.
-- `npm run lint:server` — ruff.
+- `npm run test:cli` — CLI unit and command tests; no server needed.
+- `npm run lint:server` — ruff for the server.
+- `npm run lint:cli` — ruff for the CLI.
 - `uv run --directory server python -m alembic upgrade head` — apply migrations.
 - `uv run --directory server python -m scripts.cleanup_expired` — delete expired files.
 - `uv run --directory server python -m scripts.requeue_stale` — recover stale jobs.
@@ -51,6 +53,17 @@ scrapbook, the Greek journal, or gradient-heavy backgrounds.
 - Timestamps are tz-aware UTC in PostgreSQL and integer milliseconds on the wire.
 - The client talks to the API only through the Next `/api` rewrite. Never add
   `client/app/api` route handlers.
+- The CLI (`cli/`) is a client, not a service. It never imports `server/`, never
+  touches PostgreSQL or R2 directly, and uses the same public API. It uploads
+  with the presigned PUT URL, like the browser.
+- CLI access is member-only. `POST /api/cli/requests` is public, but approval
+  requires a member cookie and a guest bearer token is rejected by
+  `require_auth`. CLI tokens are ordinary `sessions` rows with `client=cli`.
+- CLI approval codes and verifiers are stored only as hashes. Requests are
+  single-use, expire in `CLI_AUTH_REQUEST_TTL_MINUTES`, and are bound to the
+  verifier. Never log a raw code, token, or presigned URL.
+- Upload throttling is per user for members and per IP for guests. Do not
+  re-key guests onto the member limit.
 
 ## Local quirks
 

@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.routers.auth_router import router as auth_router
+from app.routers.cli_router import router as cli_router
 from app.routers.conversions_router import router as conversions_router
 from app.routers.health_router import router as health_router
 from app.routers.metadata_router import router as metadata_router
@@ -29,7 +30,7 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(
     title=settings.app_name,
-    version="0.1.0",
+    version=settings.app_version,
     description="Graphia public API.",
     lifespan=lifespan,
 )
@@ -38,6 +39,7 @@ install_error_handlers(app)
 app.include_router(health_router)
 app.include_router(metadata_router)
 app.include_router(auth_router)
+app.include_router(cli_router)
 app.include_router(conversions_router)
 
 

@@ -30,12 +30,18 @@ def create_conversion(
     user: User = Depends(require_user),
     db: Session = Depends(get_db),
 ) -> CreateConversionOut:
+    if user.is_guest:
+        upload_key = f"upload:ip:{client_ip(request)}"
+        upload_limit = settings.uploads_per_hour_per_ip
+    else:
+        upload_key = f"upload:user:{user.id}"
+        upload_limit = settings.uploads_per_hour_per_member
     if not upload_limiter.hit(
-        f"upload:{client_ip(request)}",
-        limit=settings.uploads_per_hour_per_ip,
+        upload_key,
+        limit=upload_limit,
         window_seconds=3600,
     ):
-        raise AppError(429, "Too many uploads from this network. Try again later.")
+        raise AppError(429, "Too many uploads. Try again later.")
 
     job, ticket = conversion_services.create_conversion(
         db,

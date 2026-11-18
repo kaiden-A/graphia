@@ -52,6 +52,7 @@ on both.
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
 | `APP_NAME` | no | `Graphia` | FastAPI title and log identity. |
+| `APP_VERSION` | no | `0.1.0` | Version returned by `GET /api/config` and the OpenAPI docs. |
 | `APP_ENV` | no | `development` | Set to `production` in production. Enables default-secret warnings. |
 | `LOG_LEVEL` | no | `INFO` | Python log level. |
 | `DATABASE_URL` | yes in production | local Postgres | Neon URL. `postgres://` and `postgresql://` are normalized to `postgresql+pg8000://`; libpq-only options such as `sslmode` are stripped. |
@@ -75,7 +76,7 @@ These are read by `server/app`. The processor does not need them.
 | `ZITADEL_CLIENT_ID` | yes | empty | Public client ID of the Zitadel Web application. Not a secret. |
 | `ZITADEL_REDIRECT_URI` | yes | `http://localhost:3000/api/auth/callback` | Must be registered exactly in Zitadel. Use the client origin, not the API origin. |
 | `ZITADEL_POST_LOGOUT_URI` | yes | `http://localhost:3000/login` | Must be registered exactly in Zitadel. |
-| `PUBLIC_BASE_URL` | no | `http://localhost:3000` | Client origin used for login-failure redirects. |
+| `PUBLIC_BASE_URL` | no | `http://localhost:3000` | Client origin used for login-failure redirects and CLI approval links. |
 | `SESSION_COOKIE_NAME` | no | `graphia_session` | Session cookie name. Must match the client. On Firebase Hosting rewrites use `__session`. |
 | `SESSION_TTL_DAYS` | no | `30` | Session lifetime in days. |
 | `GUEST_SESSION_TTL_HOURS` | no | `24` | Guest session lifetime. Keep it at or below the locker period so the run does not outlive the session. |
@@ -84,8 +85,10 @@ These are read by `server/app`. The processor does not need them.
 | `PROCESSOR_URL` | yes | `http://localhost:8001` | Service B base URL. Locally `http://localhost:8001`; in Compose `http://processor:8080`; on Cloud Run the processor service URL. |
 | `MAX_UPLOAD_MB` | no | `25` | Upload size limit checked by A. |
 | `MAX_ACTIVE_JOBS_PER_USER` | no | `3` | Maximum `PENDING`/`PROCESSING` jobs per user. |
-| `UPLOADS_PER_HOUR_PER_IP` | no | `20` | In-process upload throttle. |
+| `UPLOADS_PER_HOUR_PER_IP` | no | `20` | In-process upload throttle for guests. |
+| `UPLOADS_PER_HOUR_PER_MEMBER` | no | `120` | In-process upload throttle for signed-in users (browser and CLI). |
 | `DAILY_JOB_LIMIT` | no | `200` | Global daily job cap. |
+| `CLI_AUTH_REQUEST_TTL_MINUTES` | no | `10` | Lifetime of a browser-approval request for `graphia login`. |
 | `JOB_EXPIRY_HOURS` | no | `24` | Time before stored input/output objects expire. |
 | `UPLOAD_URL_TTL_SECONDS` | no | `600` | Presigned R2 PUT lifetime. |
 | `DOWNLOAD_URL_TTL_SECONDS` | no | `300` | Presigned R2 GET lifetime. |
@@ -114,6 +117,21 @@ and from the hosting provider in production.
 
 `API_ORIGIN` is read by the Next server for the rewrite; it is not exposed to the
 browser. `SESSION_COOKIE_NAME` is read by the proxy.
+
+## CLI
+
+The CLI runs on the user's machine and talks to the client origin. It has no
+server environment file. These variables are optional overrides:
+
+| Variable | Purpose |
+|---|---|
+| `GRAPHIA_SERVER` | Site origin, for example `https://graphia.app`. |
+| `GRAPHIA_TOKEN` | Session token; overrides the keychain/file store. |
+| `GRAPHIA_CONFIG_DIR` | Config and credentials directory. |
+| `GRAPHIA_NO_KEYRING` | Set to `1` to force the `0600` credentials file. |
+
+Resolution order for the server is `--server`, `GRAPHIA_SERVER`, the saved
+config file, then `http://localhost:3000`. See `docs/cli.md`.
 
 ## Local/test-only variables
 
@@ -179,10 +197,12 @@ PROCESSOR_URL=https://graphia-processor-<hash>.run.app
 MAX_UPLOAD_MB=25
 MAX_ACTIVE_JOBS_PER_USER=3
 UPLOADS_PER_HOUR_PER_IP=20
+UPLOADS_PER_HOUR_PER_MEMBER=120
 DAILY_JOB_LIMIT=200
 JOB_EXPIRY_HOURS=24
 UPLOAD_URL_TTL_SECONDS=600
 DOWNLOAD_URL_TTL_SECONDS=300
+CLI_AUTH_REQUEST_TTL_MINUTES=10
 ```
 
 ### Processor env

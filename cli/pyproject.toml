@@ -1,0 +1,49 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "graphia"
+version = "0.1.0"
+description = "Batch document conversion from the terminal, powered by Graphia."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "httpx>=0.28,<1.0",
+  "keyring>=25.5,<27.0",
+  "platformdirs>=4.3,<5.0",
+  "rich>=13.9,<15.0",
+  "tomli-w>=1.1,<2.0",
+  "typer>=0.15,<1.0",
+]
+
+[project.scripts]
+graphia = "graphia_cli.main:app"
+
+[project.urls]
+Homepage = "https://github.com/kaiden-A/graphia"
+Documentation = "https://github.com/kaiden-A/graphia/blob/main/docs/cli.md"
+Source = "https://github.com/kaiden-A/graphia"
+
+[dependency-groups]
+dev = [
+  "pytest>=8.3,<9.0",
+  "respx>=0.22,<1.0",
+  "ruff>=0.8,<1.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/graphia_cli"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["B008"]

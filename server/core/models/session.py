@@ -20,6 +20,10 @@ class UserSession(Base):
     token_hash: Mapped[str] = mapped_column(
         String(64), unique=True, index=True, nullable=False
     )
+    client: Mapped[str] = mapped_column(
+        String(16), default="web", server_default="web", nullable=False
+    )
+    label: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, nullable=False
     )

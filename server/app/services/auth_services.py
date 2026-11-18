@@ -119,12 +119,16 @@ def create_session(
     user: User,
     *,
     ttl: timedelta | None = None,
+    client: str = "web",
+    label: str | None = None,
 ) -> str:
     raw_token, token_hash = new_session_token()
     now = utcnow()
     session = UserSession(
         user_id=user.id,
         token_hash=token_hash,
+        client=client,
+        label=label,
         created_at=now,
         last_seen_at=now,
         expires_at=now + (ttl or timedelta(days=settings.session_ttl_days)),
